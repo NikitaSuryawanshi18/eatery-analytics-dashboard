@@ -1,0 +1,18 @@
+{
+  "model": "Prophet",
+  "family": "prophet",
+  "hyperparams": {
+    "seasonality_mode": "multiplicative",
+    "weekly_seasonality": true,
+    "yearly_seasonality": false,
+    "daily_seasonality": false,
+    "changepoint_prior_scale": 0.05,
+    "seasonality_prior_scale": 1.0
+  },
+  "latest_test_end": "2025-03-16",
+  "lookbacks": [
+    45
+  ],
+  "horizon_days": 30,
+  "step_days": 30
+}

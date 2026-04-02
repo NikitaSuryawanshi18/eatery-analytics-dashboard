@@ -1,0 +1,23 @@
+{
+  "model": "XGBoost",
+  "target_column": "gallons",
+  "feature_columns": [
+    "lag_1",
+    "lag_2",
+    "lag_3",
+    "lag_7",
+    "lag_14",
+    "mean_7",
+    "mean_14",
+    "std_7",
+    "std_14",
+    "mean_7_vs_14_diff",
+    "mean_7_vs_14_ratio",
+    "mean_7_vs_14_pct",
+    "day_of_week",
+    "is_weekend",
+    "month",
+    "day_of_month",
+    "week_of_year"
+  ]
+}

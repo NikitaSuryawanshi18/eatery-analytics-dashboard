@@ -1,0 +1,5 @@
+split_idx_global,member_model,weight,weight_source
+1,XGBoost,0.25,equal_fallback
+1,LinearRegression,0.25,equal_fallback
+1,Prophet,0.25,equal_fallback
+1,ARIMA,0.25,equal_fallback

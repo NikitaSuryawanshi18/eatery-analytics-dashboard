@@ -1,0 +1,125 @@
+{
+  "type": "weighted_average",
+  "weights": [
+    {
+      "split_idx_global": 1,
+      "member_model": "Prophet",
+      "weight": 0.5,
+      "weight_source": "equal_fallback"
+    },
+    {
+      "split_idx_global": 1,
+      "member_model": "ARIMA",
+      "weight": 0.5,
+      "weight_source": "equal_fallback"
+    },
+    {
+      "split_idx_global": 2,
+      "member_model": "Prophet",
+      "weight": 0.5726267509015749,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 2,
+      "member_model": "ARIMA",
+      "weight": 0.4273732490984251,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 3,
+      "member_model": "Prophet",
+      "weight": 0.6097176584420987,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 3,
+      "member_model": "ARIMA",
+      "weight": 0.3902823415579013,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 4,
+      "member_model": "Prophet",
+      "weight": 0.5702493018197113,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 4,
+      "member_model": "ARIMA",
+      "weight": 0.4297506981802886,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 5,
+      "member_model": "Prophet",
+      "weight": 0.5084682408980961,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 5,
+      "member_model": "ARIMA",
+      "weight": 0.49153175910190405,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 6,
+      "member_model": "Prophet",
+      "weight": 0.5143184197342912,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 6,
+      "member_model": "ARIMA",
+      "weight": 0.4856815802657089,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 7,
+      "member_model": "Prophet",
+      "weight": 0.5059291622502243,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 7,
+      "member_model": "ARIMA",
+      "weight": 0.4940708377497757,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 8,
+      "member_model": "Prophet",
+      "weight": 0.5041479864654715,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 8,
+      "member_model": "ARIMA",
+      "weight": 0.49585201353452846,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 9,
+      "member_model": "Prophet",
+      "weight": 0.5234033213489894,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 9,
+      "member_model": "ARIMA",
+      "weight": 0.4765966786510106,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 10,
+      "member_model": "Prophet",
+      "weight": 0.5350808783914597,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 10,
+      "member_model": "ARIMA",
+      "weight": 0.4649191216085402,
+      "weight_source": "inverse_historical_rmse"
+    }
+  ]
+}

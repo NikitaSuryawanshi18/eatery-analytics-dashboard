@@ -1,0 +1,14 @@
+{
+  "model": "SARIMA",
+  "family": "sarima",
+  "hyperparams": {
+    "order": "(2,1,2)",
+    "seasonal_order": "(1,1,1,7)"
+  },
+  "latest_test_end": "2025-11-12",
+  "lookbacks": [
+    45
+  ],
+  "horizon_days": 30,
+  "step_days": 30
+}

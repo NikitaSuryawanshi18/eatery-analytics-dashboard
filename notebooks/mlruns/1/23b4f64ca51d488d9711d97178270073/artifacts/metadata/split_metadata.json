@@ -1,0 +1,74 @@
+{
+  "cv_splits": [
+    "cv_34",
+    "cv_35",
+    "cv_36",
+    "cv_37",
+    "cv_38"
+  ],
+  "holdout_split": "holdout",
+  "train_rows": 302,
+  "test_rows": 14,
+  "train_date_min": "2025-01-01 00:00:00",
+  "train_date_max": "2025-10-29 00:00:00",
+  "test_date_min": "2025-10-30 00:00:00",
+  "test_date_max": "2025-11-12 00:00:00",
+  "split_details": {
+    "holdout": {
+      "split_name": "holdout",
+      "train_rows": 302,
+      "test_rows": 14,
+      "train_start": "2025-01-01 00:00:00",
+      "train_end": "2025-10-29 00:00:00",
+      "test_start": "2025-10-30 00:00:00",
+      "test_end": "2025-11-12 00:00:00"
+    },
+    "cv": [
+      {
+        "split_name": "cv_34",
+        "train_rows": 261,
+        "test_rows": 7,
+        "train_start": "2025-01-01 00:00:00",
+        "train_end": "2025-09-18 00:00:00",
+        "test_start": "2025-09-19 00:00:00",
+        "test_end": "2025-09-25 00:00:00"
+      },
+      {
+        "split_name": "cv_35",
+        "train_rows": 268,
+        "test_rows": 7,
+        "train_start": "2025-01-01 00:00:00",
+        "train_end": "2025-09-25 00:00:00",
+        "test_start": "2025-09-26 00:00:00",
+        "test_end": "2025-10-02 00:00:00"
+      },
+      {
+        "split_name": "cv_36",
+        "train_rows": 275,
+        "test_rows": 7,
+        "train_start": "2025-01-01 00:00:00",
+        "train_end": "2025-10-02 00:00:00",
+        "test_start": "2025-10-03 00:00:00",
+        "test_end": "2025-10-09 00:00:00"
+      },
+      {
+        "split_name": "cv_37",
+        "train_rows": 282,
+        "test_rows": 7,
+        "train_start": "2025-01-01 00:00:00",
+        "train_end": "2025-10-09 00:00:00",
+        "test_start": "2025-10-10 00:00:00",
+        "test_end": "2025-10-16 00:00:00"
+      },
+      {
+        "split_name": "cv_38",
+        "train_rows": 289,
+        "test_rows": 7,
+        "train_start": "2025-01-01 00:00:00",
+        "train_end": "2025-10-16 00:00:00",
+        "test_start": "2025-10-17 00:00:00",
+        "test_end": "2025-10-23 00:00:00"
+      }
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "model": "ARIMA",
+  "family": "arima",
+  "hyperparams": {
+    "order": "(2,1,2)"
+  },
+  "latest_test_end": "2025-03-16",
+  "lookbacks": [
+    45
+  ],
+  "horizon_days": 30,
+  "step_days": 30
+}

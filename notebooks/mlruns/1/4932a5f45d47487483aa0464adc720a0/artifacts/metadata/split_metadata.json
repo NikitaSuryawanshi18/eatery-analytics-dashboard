@@ -1,0 +1,16 @@
+{
+  "cv_splits": [
+    "cv_34",
+    "cv_35",
+    "cv_36",
+    "cv_37",
+    "cv_38"
+  ],
+  "holdout_split": "holdout",
+  "train_rows": 302,
+  "test_rows": 14,
+  "train_date_min": "2025-01-01 00:00:00",
+  "train_date_max": "2025-10-29 00:00:00",
+  "test_date_min": "2025-10-30 00:00:00",
+  "test_date_max": "2025-11-12 00:00:00"
+}

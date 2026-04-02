@@ -1,0 +1,11 @@
+{
+  "model_name": "moving_average",
+  "metrics": {
+    "cv_mae_mean": 2.554567197034425,
+    "cv_rmse_mean": 3.2896112245457254,
+    "cv_mape_mean": 16.91108342943913,
+    "holdout_mae": 3.0714813110664587,
+    "holdout_rmse": 3.7194081440946336,
+    "holdout_mape": 21.96669015513977
+  }
+}

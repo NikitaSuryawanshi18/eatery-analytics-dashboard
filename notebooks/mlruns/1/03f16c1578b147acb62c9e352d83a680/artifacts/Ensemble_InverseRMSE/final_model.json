@@ -1,0 +1,17 @@
+{
+  "type": "weighted_average",
+  "weights": [
+    {
+      "split_idx_global": 1,
+      "member_model": "Prophet",
+      "weight": 0.5,
+      "weight_source": "equal_fallback"
+    },
+    {
+      "split_idx_global": 1,
+      "member_model": "ARIMA",
+      "weight": 0.5,
+      "weight_source": "equal_fallback"
+    }
+  ]
+}

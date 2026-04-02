@@ -12,7 +12,7 @@ venv/
 .ipynb_checkpoints/
 
 # Local artifacts and logs
-artifacts/
+artifacts/*
 logs/
 milk_tmp/
 *.log
@@ -31,9 +31,20 @@ notebooks/cleaned_data.csv
 mlruns.db.bak*
 
 # MLflow / local tracking DBs
-mlruns/
+/mlruns/
 *.db
 *.db-journal
+
+# Shared demo/repro assets to keep in git
+!/mlruns_v2.db
+!/notebooks/mlruns/
+!/notebooks/mlruns/**
+!artifacts/.gitkeep
+!artifacts/data/
+artifacts/data/*
+!artifacts/data/cleaned_merged_with_ingredients.csv
+!artifacts/expanding_backtest_v2/
+!artifacts/expanding_backtest_v2/**
 
 # OS/editor noise
 .DS_Store

@@ -19,7 +19,7 @@ pip install scikit-learn xgboost prophet statsmodels mlflow
 
 Optional env vars:
 ```bash
-set MLFLOW_TRACKING_URI=sqlite:///mlruns.db
+set MLFLOW_TRACKING_URI=sqlite:///mlruns_v2.db
 set MLFLOW_MODEL_NAME=milk_forecast
 set MLFLOW_MODEL_ALIAS=production
 ```
@@ -44,11 +44,11 @@ Then run all notebook cells.
 
 ## MLflow
 ```bash
-mlflow ui --backend-store-uri sqlite:///mlruns.db
+mlflow ui --backend-store-uri sqlite:///mlruns_v2.db --port 5001
 ```
 
 Experiment:
-- `milk_models_expanding_v2`
+- `lookforward_30_30_all_models`
 
 Run layout:
 - parent run per model,

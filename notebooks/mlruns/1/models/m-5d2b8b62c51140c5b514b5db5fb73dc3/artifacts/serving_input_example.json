@@ -1,0 +1,12 @@
+{
+  "dataframe_split": {
+    "columns": [
+      "horizon_days"
+    ],
+    "data": [
+      [
+        7
+      ]
+    ]
+  }
+}

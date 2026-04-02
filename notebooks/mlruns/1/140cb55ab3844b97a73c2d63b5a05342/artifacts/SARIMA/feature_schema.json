@@ -1,0 +1,5 @@
+{
+  "model": "SARIMA",
+  "target_column": "gallons",
+  "feature_columns": []
+}

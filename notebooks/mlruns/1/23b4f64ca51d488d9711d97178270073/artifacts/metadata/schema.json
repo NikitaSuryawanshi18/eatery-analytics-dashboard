@@ -1,0 +1,12 @@
+{
+  "train_columns": {
+    "date": "datetime64[ns]",
+    "total_milk_oz": "float64",
+    "gallons": "float64"
+  },
+  "test_columns": {
+    "date": "datetime64[ns]",
+    "total_milk_oz": "float64",
+    "gallons": "float64"
+  }
+}

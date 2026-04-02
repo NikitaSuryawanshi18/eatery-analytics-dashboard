@@ -1,0 +1,245 @@
+{
+  "type": "weighted_average",
+  "weights": [
+    {
+      "split_idx_global": 1,
+      "member_model": "XGBoost",
+      "weight": 0.25,
+      "weight_source": "equal_fallback"
+    },
+    {
+      "split_idx_global": 1,
+      "member_model": "LinearRegression",
+      "weight": 0.25,
+      "weight_source": "equal_fallback"
+    },
+    {
+      "split_idx_global": 1,
+      "member_model": "Prophet",
+      "weight": 0.25,
+      "weight_source": "equal_fallback"
+    },
+    {
+      "split_idx_global": 1,
+      "member_model": "ARIMA",
+      "weight": 0.25,
+      "weight_source": "equal_fallback"
+    },
+    {
+      "split_idx_global": 2,
+      "member_model": "XGBoost",
+      "weight": 0.2965268765122855,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 2,
+      "member_model": "LinearRegression",
+      "weight": 0.22495191537856832,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 2,
+      "member_model": "Prophet",
+      "weight": 0.2740140446370367,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 2,
+      "member_model": "ARIMA",
+      "weight": 0.20450716347210945,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 3,
+      "member_model": "XGBoost",
+      "weight": 0.3787793558272771,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 3,
+      "member_model": "LinearRegression",
+      "weight": 3.743756197425998e-12,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 3,
+      "member_model": "Prophet",
+      "weight": 0.37876919653860214,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 3,
+      "member_model": "ARIMA",
+      "weight": 0.242451447630377,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 4,
+      "member_model": "XGBoost",
+      "weight": 0.3560029528637359,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 4,
+      "member_model": "LinearRegression",
+      "weight": 6.390261844463633e-12,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 4,
+      "member_model": "Prophet",
+      "weight": 0.36723886649976634,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 4,
+      "member_model": "ARIMA",
+      "weight": 0.27675818063010754,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 5,
+      "member_model": "XGBoost",
+      "weight": 0.3654469776347865,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 5,
+      "member_model": "LinearRegression",
+      "weight": 8.832551618350548e-12,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 5,
+      "member_model": "Prophet",
+      "weight": 0.3226500590341192,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 5,
+      "member_model": "ARIMA",
+      "weight": 0.31190296332226175,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 6,
+      "member_model": "XGBoost",
+      "weight": 0.3590780405979634,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 6,
+      "member_model": "LinearRegression",
+      "weight": 1.0184693886636255e-11,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 6,
+      "member_model": "Prophet",
+      "weight": 0.3296379693274228,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 6,
+      "member_model": "ARIMA",
+      "weight": 0.3112839900644291,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 7,
+      "member_model": "XGBoost",
+      "weight": 0.36476207783258985,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 7,
+      "member_model": "LinearRegression",
+      "weight": 1.1423977835709254e-11,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 7,
+      "member_model": "Prophet",
+      "weight": 0.32138538978595127,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 7,
+      "member_model": "ARIMA",
+      "weight": 0.31385253237003485,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 8,
+      "member_model": "XGBoost",
+      "weight": 0.3707531457470714,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 8,
+      "member_model": "LinearRegression",
+      "weight": 1.4081265787241634e-11,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 8,
+      "member_model": "Prophet",
+      "weight": 0.31723353455424697,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 8,
+      "member_model": "ARIMA",
+      "weight": 0.3120133196846004,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 9,
+      "member_model": "XGBoost",
+      "weight": 0.3674602982822766,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 9,
+      "member_model": "LinearRegression",
+      "weight": 1.560854239460524e-11,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 9,
+      "member_model": "Prophet",
+      "weight": 0.3310733807559859,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 9,
+      "member_model": "ARIMA",
+      "weight": 0.3014663209461289,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 10,
+      "member_model": "XGBoost",
+      "weight": 0.36671710253310136,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 10,
+      "member_model": "LinearRegression",
+      "weight": 1.7016296854994535e-11,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 10,
+      "member_model": "Prophet",
+      "weight": 0.3388575690377717,
+      "weight_source": "inverse_historical_rmse"
+    },
+    {
+      "split_idx_global": 10,
+      "member_model": "ARIMA",
+      "weight": 0.29442532841211055,
+      "weight_source": "inverse_historical_rmse"
+    }
+  ]
+}

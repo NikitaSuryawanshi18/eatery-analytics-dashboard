@@ -1,0 +1,35 @@
+artifact_path: file:///c:/Users/Bhavesh/Documents/Python Scripts/Jeff/Cafe/milk-dashboard/notebooks/mlruns/1/models/m-5d2b8b62c51140c5b514b5db5fb73dc3/artifacts
+flavors:
+  python_function:
+    artifacts:
+      runner:
+        path: artifacts\runner.pkl
+        uri: C:\Users\Bhavesh\AppData\Local\Temp\milk_run_9f837wyl\runner.pkl
+    cloudpickle_version: 3.1.2
+    code: null
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.pyfunc.model
+    python_model: python_model.pkl
+    python_version: 3.11.9
+    streamable: false
+is_signature_from_type_hint: false
+mlflow_version: 3.10.1
+model_id: m-5d2b8b62c51140c5b514b5db5fb73dc3
+model_size_bytes: 738
+model_uuid: m-5d2b8b62c51140c5b514b5db5fb73dc3
+prompts: null
+run_id: 23b4f64ca51d488d9711d97178270073
+saved_input_example_info:
+  artifact_path: input_example.json
+  pandas_orient: split
+  serving_input_path: serving_input_example.json
+  type: dataframe
+signature:
+  inputs: '[{"type": "long", "name": "horizon_days", "required": true}]'
+  outputs: '[{"type": "datetime", "name": "date", "required": true}, {"type": "double",
+    "name": "forecast_gallons", "required": true}]'
+  params: null
+type_hint_from_example: false
+utc_time_created: '2026-03-24 18:56:00.882319'

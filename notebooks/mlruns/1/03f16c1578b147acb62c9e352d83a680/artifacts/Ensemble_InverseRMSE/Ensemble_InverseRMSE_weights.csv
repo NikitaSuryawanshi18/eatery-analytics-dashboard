@@ -1,0 +1,3 @@
+split_idx_global,member_model,weight,weight_source
+1,Prophet,0.5,equal_fallback
+1,ARIMA,0.5,equal_fallback

@@ -43,6 +43,20 @@ set SMOKE_TEST=1
 set RUN_OUTPUT_SUFFIX=smoke
 ```
 
+## Shared MLflow snapshot in git
+This repo is configured to version the minimum reproducible MLflow state for collaboration:
+- `/mlruns_v2.db` (tracking backend DB)
+- `/notebooks/mlruns/` (run artifacts referenced by the DB)
+- `artifacts/expanding_backtest_v2/` (notebook output bundle)
+- `artifacts/data/cleaned_merged_with_ingredients.csv` (input used by notebook v2)
+
+After clone, teammates can inspect your existing runs with:
+```bash
+mlflow ui --backend-store-uri sqlite:///mlruns_v2.db --port 5001
+```
+
+Then open `http://127.0.0.1:5001` and use experiment `lookforward_30_30_all_models` (or whichever was logged).
+
 ## Data flow in notebook v2
 1. Load `artifacts/data/cleaned_merged_with_ingredients.csv`.
 2. Resolve date and target columns.

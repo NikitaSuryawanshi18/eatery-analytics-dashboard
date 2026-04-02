@@ -1,0 +1,10 @@
+{
+  "model": "Ensemble_InverseRMSE",
+  "weighting": "inverse_historical_rmse",
+  "members": [
+    "XGBoost",
+    "LinearRegression",
+    "Prophet",
+    "ARIMA"
+  ]
+}

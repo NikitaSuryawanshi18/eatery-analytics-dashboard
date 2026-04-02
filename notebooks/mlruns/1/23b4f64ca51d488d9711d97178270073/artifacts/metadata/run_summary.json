@@ -1,0 +1,11 @@
+{
+  "model_name": "seasonal_naive",
+  "metrics": {
+    "cv_mae_mean": 1.182817093668761,
+    "cv_rmse_mean": 1.4480738042147294,
+    "cv_mape_mean": 8.904985688255149,
+    "holdout_mae": 1.5237666584868619,
+    "holdout_rmse": 1.857306855505529,
+    "holdout_mape": 11.480651518876703
+  }
+}

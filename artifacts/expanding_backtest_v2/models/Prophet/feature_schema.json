@@ -1,0 +1,5 @@
+{
+  "model": "Prophet",
+  "target_column": "gallons",
+  "feature_columns": []
+}
