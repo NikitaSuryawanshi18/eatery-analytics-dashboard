@@ -21,6 +21,13 @@ milk_tmp/
 *.xlsx
 JItters data.csv
 *.parquet
+notebooks/cleaned_data.csv
+
+# Build metadata
+*.egg-info/
+
+# Backups
+*.bak
 
 # MLflow / local tracking DBs
 mlruns/
