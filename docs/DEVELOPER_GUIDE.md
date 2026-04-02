@@ -58,6 +58,7 @@ set RUN_OUTPUT_SUFFIX=smoke
 - `LinearRegression`
 - `Prophet`
 - `ARIMA` (`order=(2,1,2)`)
+- `SARIMA` (`order=(2,1,2)`, `seasonal_order=(1,1,1,7)`)
 - `Ensemble_InverseRMSE` (optional, currently disabled by default via `ENABLE_ENSEMBLE=False`)
 
 ## Artifact contracts

@@ -27,7 +27,7 @@ set MLFLOW_MODEL_ALIAS=production
 ## Notebook workflow
 1. Run `notebooks/01_data_cleaning.ipynb` to produce cleaned data artifacts.
 2. Run `notebooks/04_expanding_window_experiment_v2.ipynb` for:
-   - models: `XGBoost`, `LinearRegression`, `Prophet`, `ARIMA`,
+   - models: `XGBoost`, `LinearRegression`, `Prophet`, `ARIMA`, `SARIMA`,
    - expanding window: 45-day train, 30-day prediction, 30-day expansion step,
    - parent/child MLflow logging with stepped metric history.
 3. Review artifacts in `artifacts/expanding_backtest_v2/`.
