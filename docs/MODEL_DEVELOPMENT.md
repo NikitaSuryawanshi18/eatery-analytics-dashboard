@@ -25,7 +25,7 @@ pip install -e .[dev]
 Optional MLflow URI:
 
 ```bash
-set MLFLOW_TRACKING_URI=sqlite:///mlruns.db
+set MLFLOW_TRACKING_URI=sqlite:///mlruns_v2.db
 ```
 
 ## Step 1: Build cleaned dataset
@@ -63,16 +63,16 @@ Default behavior is DataImport-compatible:
 
 Notebook path:
 
-- `notebooks/02_model_lab.ipynb`
+- `notebooks/04_expanding_window_experiment_v2.ipynb`
 
 or CLI:
 
 ```bash
 python -m milk_dashboard.cli.run_experiment ^
-  --input-csv "artifacts\\data_check\\cleaned_merged_with_ingredients.csv" ^
+  --input-csv "artifacts\\data\\cleaned_merged_with_ingredients.csv" ^
   --model prophet ^
-  --tracking-uri "sqlite:///mlruns.db" ^
-  --experiment-name "milk_models" ^
+  --tracking-uri "sqlite:///mlruns_v2.db" ^
+  --experiment-name "lookforward_30_30_all_models" ^
   --registered-model-name "milk_forecast" ^
   --holdout-days 14 ^
   --min-train-days 30 ^
@@ -220,7 +220,7 @@ This ensures reproducibility and deployability.
 
 1. Update data files.
 2. Run `01_data_cleaning.ipynb`.
-3. Run `02_model_lab.ipynb`.
+3. Run `04_expanding_window_experiment_v2.ipynb`.
 4. Compare leaderboard metrics.
 5. Promote best version.
 6. Restart/reload API and validate `/ready`, then `/v1/forecast`.

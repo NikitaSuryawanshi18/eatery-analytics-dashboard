@@ -35,7 +35,7 @@ pip install scikit-learn xgboost prophet statsmodels mlflow
 4. Run all cells.
 5. Inspect:
    - `artifacts/expanding_backtest_v2/summary/model_comparison_summary.csv`
-   - MLflow experiment `milk_models_expanding_v2`.
+   - MLflow experiment `lookforward_30_30_all_models`.
 
 Smoke test setup:
 ```bash

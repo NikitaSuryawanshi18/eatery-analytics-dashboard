@@ -4,8 +4,8 @@
 1. Raw inputs (`JItters data.csv`, `Ingredient Measure.xlsx`) are cleaned in [01_data_cleaning.ipynb](/c:/Users/Bhavesh/Documents/Python%20Scripts/Jeff/Cafe/milk-dashboard/notebooks/01_data_cleaning.ipynb).
 2. Cleaned merged output (`artifacts/data/cleaned_merged_with_ingredients.csv`) is consumed by [04_expanding_window_experiment_v2.ipynb](/c:/Users/Bhavesh/Documents/Python%20Scripts/Jeff/Cafe/milk-dashboard/notebooks/04_expanding_window_experiment_v2.ipynb).
 3. Notebook derives daily `gallons` target and runs expanding-window backtests.
-4. Models (`XGBoost`, `LinearRegression`, `Prophet`, `ARIMA`) are evaluated on identical split windows. Ensemble is currently kept disabled by default.
-5. Outputs are written to `artifacts/expanding_backtest_v2/` and logged to MLflow (`mlruns.db`).
+4. Models (`XGBoost`, `XGBoost_Aggressive`, `LinearRegression`, `Prophet`, `ARIMA`, `SARIMA`) are evaluated on identical split windows. Ensemble is currently kept disabled by default.
+5. Outputs are written to `artifacts/expanding_backtest_v2/` and logged to MLflow (`mlruns_v2.db` + `notebooks/mlruns/` artifacts).
 6. Serving layer (`src/milk_dashboard/api/app.py`) loads promoted model aliases for operational forecast APIs.
 
 ## File map by stage
