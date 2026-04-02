@@ -28,6 +28,7 @@ notebooks/cleaned_data.csv
 
 # Backups
 *.bak
+mlruns.db.bak*
 
 # MLflow / local tracking DBs
 mlruns/
