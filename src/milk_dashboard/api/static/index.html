@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Milk Operations Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/dashboard.css" />
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="/static/dashboard.js" defer></script>
+</head>
+<body data-theme="dark">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-top">
+        <div class="brand-block">
+          <h1>Milk Ops</h1>
+          <p>Forecasting and sales intelligence</p>
+        </div>
+        <button id="sidebarToggleBtn" class="sidebar-toggle" aria-label="Toggle sidebar">&#9776;</button>
+      </div>
+
+      <details class="settings-group" open>
+        <summary>Forecast Settings</summary>
+        <div class="settings-grid">
+          <label>
+            Horizon Days
+            <div class="input-row">
+              <input id="horizonDays" type="range" min="1" max="30" value="7" />
+              <span id="horizonDaysValue">7</span>
+            </div>
+          </label>
+          <label>
+            Lookback Days
+            <div class="input-row">
+              <input id="lookbackDays" type="range" min="7" max="180" value="30" />
+              <span id="lookbackDaysValue">30</span>
+            </div>
+          </label>
+          <label>
+            Safety Buffer %
+            <div class="input-row">
+              <input id="safetyBufferPct" type="range" min="0" max="30" value="10" />
+              <span id="safetyBufferPctValue">10</span>
+            </div>
+          </label>
+          <label>
+            Weekday Pattern Mode
+            <select id="weekdayMode">
+              <option value="mean">Mean Bars</option>
+              <option value="median">Median Bars</option>
+              <option value="boxplot">Boxplot</option>
+            </select>
+          </label>
+          <label>
+            Sales Top N Items
+            <div class="input-row">
+              <input id="topNItems" type="range" min="5" max="30" value="12" />
+              <span id="topNItemsValue">12</span>
+            </div>
+          </label>
+          <label class="checkbox-row">
+            <input id="showForecastRange" type="checkbox" checked />
+            Show Prophet Forecast Range
+          </label>
+          <label class="checkbox-row">
+            <input id="splitForecastCharts" type="checkbox" />
+            Split into Past + Forecast charts
+          </label>
+        </div>
+      </details>
+
+      <details class="settings-group" open>
+        <summary>Appearance</summary>
+        <div class="settings-grid">
+          <label>
+            Theme
+            <select id="themeSelect">
+              <option value="dark" selected>Dark</option>
+              <option value="light">Light</option>
+            </select>
+          </label>
+        </div>
+      </details>
+
+      <div class="sidebar-actions">
+        <button id="applySettingsBtn" class="btn btn-primary">Apply Settings</button>
+        <button id="refreshDataBtn" class="btn btn-secondary">Refresh Data Cache</button>
+      </div>
+      <p id="sidebarStatus" class="status"></p>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div>
+          <h2>Operations Dashboard</h2>
+          <p>FastAPI-driven analytics and configuration workspace</p>
+        </div>
+        <nav class="tab-nav">
+          <button class="tab-btn active" data-tab="forecastTab">Milk Forecasts</button>
+          <button class="tab-btn" data-tab="salesTab">Sales Breakdown</button>
+          <button class="tab-btn" data-tab="ingredientsTab">Ingredient Config</button>
+        </nav>
+      </header>
+
+      <section id="forecastTab" class="tab-panel active">
+        <article class="hero-card">
+          <div class="hero-head">
+            <h3>Weekly Order Banner</h3>
+            <span class="info-icon" data-tooltip="Forecasted quantity with safety buffer for the selected horizon.">i</span>
+          </div>
+          <p id="heroNeed" class="hero-need">Need -- gallons for coming week</p>
+          <div class="hero-metrics">
+            <div>
+              <span>Expected Usage</span>
+              <strong id="heroExpected">--</strong>
+            </div>
+            <div>
+              <span>Recommended Order</span>
+              <strong id="heroOrder">--</strong>
+            </div>
+            <div>
+              <span>Model</span>
+              <strong id="heroModel">--</strong>
+            </div>
+          </div>
+          <p id="forecastNote" class="muted"></p>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>Past + Forecast Combined</h3>
+            <span class="info-icon" data-tooltip="Merged chart: historical gallons and next-horizon forecast in one timeline.">i</span>
+          </div>
+          <div id="combinedForecastChart" class="chart"></div>
+          <div id="splitForecastWrap" class="card-grid two hidden split-wrap">
+            <article class="card split-card">
+              <div class="card-head">
+                <h3>Past Window</h3>
+              </div>
+              <div id="pastOnlyChart" class="chart"></div>
+            </article>
+            <article class="card split-card">
+              <div class="card-head">
+                <h3>Forecast Window</h3>
+              </div>
+              <div id="forecastOnlyChart" class="chart"></div>
+            </article>
+          </div>
+        </article>
+
+        <div class="card-grid two">
+          <article class="card">
+            <div class="card-head">
+              <h3>Day-of-Week Pattern</h3>
+              <span class="info-icon" data-tooltip="Switch between mean, median, and boxplot from sidebar settings.">i</span>
+            </div>
+            <div id="weekdayPatternChart" class="chart"></div>
+          </article>
+          <article class="card">
+            <div class="card-head">
+              <h3>Monthly Pattern</h3>
+              <span class="info-icon" data-tooltip="Total gallons per month with avg/day overlay.">i</span>
+            </div>
+            <div id="monthlyPatternChart" class="chart"></div>
+          </article>
+        </div>
+
+        <details class="data-window">
+          <summary>Expand: Past and Forecast Numbers</summary>
+          <div id="forecastTablesWrap" class="table-stack"></div>
+        </details>
+
+        <details class="data-window">
+          <summary>Expand: Pattern Tables</summary>
+          <div id="patternTablesWrap" class="table-stack"></div>
+        </details>
+      </section>
+
+      <section id="salesTab" class="tab-panel">
+        <article class="card">
+          <div class="card-head">
+            <h3>Analysis Window</h3>
+            <span class="info-icon" data-tooltip="Filter the sales breakdown by a preset window or custom date range.">i</span>
+          </div>
+          <div class="inline-controls">
+            <label>
+              Duration
+              <select id="salesWindowMode">
+                <option value="all_time" selected>All Time</option>
+                <option value="past_month">Past Month</option>
+                <option value="past_quarter">Past Quarter</option>
+                <option value="custom">Advanced - Custom Dates</option>
+              </select>
+            </label>
+            <label id="salesStartWrap" class="hidden">
+              Start Date
+              <input id="salesStartDate" type="date" />
+            </label>
+            <label id="salesEndWrap" class="hidden">
+              End Date
+              <input id="salesEndDate" type="date" />
+            </label>
+            <label>
+              Drilldown Category
+              <select id="salesCategorySelect"></select>
+            </label>
+            <button id="applySalesWindowBtn" class="btn btn-secondary">Apply Window</button>
+          </div>
+          <p id="salesWindowStatus" class="muted"></p>
+        </article>
+
+        <div class="card-grid three">
+          <article class="metric-card">
+            <span>Total Sales Rows</span>
+            <strong id="salesRowsMetric">--</strong>
+          </article>
+          <article class="metric-card">
+            <span>Total Quantity Sold</span>
+            <strong id="salesQtyMetric">--</strong>
+          </article>
+          <article class="metric-card">
+            <span>Total Sales Amount</span>
+            <strong id="salesAmountMetric">--</strong>
+          </article>
+          <article class="metric-card">
+            <span>Milk Mapping Coverage</span>
+            <strong id="salesCoverageMetric">--</strong>
+          </article>
+        </div>
+
+        <div class="card-grid two">
+          <article class="card">
+            <div class="card-head">
+              <h3>Category Volume vs Sales $</h3>
+              <span class="info-icon" data-tooltip="Dual-axis: bars for sales volume and line for sales amount by category.">i</span>
+            </div>
+            <div id="categoryDualAxisChart" class="chart"></div>
+          </article>
+          <article class="card">
+            <div class="card-head">
+              <h3>Category Contribution Over Time</h3>
+              <span class="info-icon" data-tooltip="How each major category contributes to total sales volume over time.">i</span>
+            </div>
+            <div id="categoryCompositionChart" class="chart"></div>
+          </article>
+        </div>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>Item Drilldown by Time (Selected Category)</h3>
+            <span class="info-icon" data-tooltip="For the selected category, track top item volume and sales amount by month.">i</span>
+          </div>
+          <div id="itemDrilldownChart" class="chart"></div>
+        </article>
+
+        <details class="data-window">
+          <summary>Expand: Sales Tables</summary>
+          <div id="salesTablesWrap" class="table-stack"></div>
+        </details>
+      </section>
+
+      <section id="ingredientsTab" class="tab-panel">
+        <article class="card">
+          <div class="card-head">
+            <h3>Ingredient Measure Editor</h3>
+            <span class="info-icon" data-tooltip="Edit milk oz mappings and save back to the Ingredient Measure Excel file.">i</span>
+          </div>
+          <p class="muted">File: <strong id="ingredientFileName">--</strong></p>
+
+          <div class="search-row">
+            <input
+              id="ingredientSearch"
+              type="text"
+              placeholder="Search category, item, or price point (press Enter for next match)"
+            />
+            <button id="ingredientSearchBtn" class="btn btn-secondary" type="button">Find</button>
+          </div>
+          <p id="ingredientSearchStatus" class="muted"></p>
+
+          <div class="inline-actions">
+            <button id="addIngredientRowBtn" class="btn btn-secondary">Add Row</button>
+            <button id="saveIngredientBtn" class="btn btn-primary">Save Changes</button>
+            <button id="reloadIngredientBtn" class="btn btn-secondary">Reload</button>
+          </div>
+          <p id="ingredientStatus" class="status"></p>
+
+          <div class="table-wrap">
+            <table class="editable-table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Item</th>
+                  <th>Price Point</th>
+                  <th>Milk (oz)</th>
+                  <th>Delete</th>
+                </tr>
+              </thead>
+              <tbody id="ingredientTableBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
+

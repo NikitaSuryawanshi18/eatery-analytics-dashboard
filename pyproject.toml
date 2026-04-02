@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "milk-dashboard"
+version = "0.1.0"
+description = "Notebook-driven milk forecasting pipeline with MLflow and FastAPI"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "openpyxl>=3.1",
+    "prophet>=1.1.5",
+    "mlflow>=2.14",
+    "fastapi>=0.112",
+    "uvicorn>=0.30",
+    "pydantic>=2.7",
+    "pyarrow>=16",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "jupyter>=1.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+

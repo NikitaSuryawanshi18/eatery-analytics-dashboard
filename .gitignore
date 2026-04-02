@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# Environments
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local artifacts and logs
+artifacts/
+logs/
+milk_tmp/
+*.log
+
+# Local data files
+*.xlsx
+JItters data.csv
+*.parquet
+
+# MLflow / local tracking DBs
+mlruns/
+*.db
+*.db-journal
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
