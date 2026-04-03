@@ -1,0 +1,22 @@
+{
+  "model": "XGBoost_Aggressive",
+  "family": "feature",
+  "hyperparams": {
+    "n_estimators": 900,
+    "learning_rate": 0.07,
+    "max_depth": 8,
+    "min_child_weight": 1,
+    "subsample": 1.0,
+    "colsample_bytree": 1.0,
+    "reg_alpha": 0.0,
+    "reg_lambda": 0.3,
+    "random_state": 42,
+    "objective": "reg:squarederror"
+  },
+  "latest_test_end": "2025-11-12",
+  "lookbacks": [
+    45
+  ],
+  "horizon_days": 7,
+  "step_days": 15
+}

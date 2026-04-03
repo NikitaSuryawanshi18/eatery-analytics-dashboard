@@ -1,0 +1,13 @@
+{
+  "model": "LinearRegression",
+  "family": "feature",
+  "hyperparams": {
+    "fit_intercept": true
+  },
+  "latest_test_end": "2025-11-12",
+  "lookbacks": [
+    45
+  ],
+  "horizon_days": 7,
+  "step_days": 15
+}
