@@ -10,6 +10,7 @@ venv/
 
 # Jupyter
 .ipynb_checkpoints/
+/scratch.ipynb
 
 # Local artifacts and logs
 artifacts/*
