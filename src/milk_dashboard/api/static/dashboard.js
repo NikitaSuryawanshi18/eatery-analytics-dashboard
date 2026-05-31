@@ -2,6 +2,7 @@ const state = {
   settings: {
     horizonDays: 7,
     lookbackDays: 30,
+    forecastModel: "mlflow_pretrained",
     safetyBufferPct: 10,
     showForecastRange: true,
     splitForecastCharts: false,
@@ -22,13 +23,29 @@ const state = {
     matches: [],
     activeIndex: -1,
   },
+  admin: {
+    modelConfig: null,
+    latestEod: null,
+  },
+  auth: {
+    me: null,
+  },
 };
 
 const el = {
   appShell: document.querySelector(".app-shell"),
   sidebarToggleBtn: document.getElementById("sidebarToggleBtn"),
+  authEmail: document.getElementById("authEmail"),
+  authPassword: document.getElementById("authPassword"),
+  authRegisterBtn: document.getElementById("authRegisterBtn"),
+  authLoginBtn: document.getElementById("authLoginBtn"),
+  authLogoutBtn: document.getElementById("authLogoutBtn"),
+  squareConnectBtn: document.getElementById("squareConnectBtn"),
+  squareDisconnectBtn: document.getElementById("squareDisconnectBtn"),
+  authStatus: document.getElementById("authStatus"),
   horizonDays: document.getElementById("horizonDays"),
   lookbackDays: document.getElementById("lookbackDays"),
+  forecastModel: document.getElementById("forecastModel"),
   safetyBufferPct: document.getElementById("safetyBufferPct"),
   showForecastRange: document.getElementById("showForecastRange"),
   splitForecastCharts: document.getElementById("splitForecastCharts"),
@@ -58,6 +75,18 @@ const el = {
   forecastTablesWrap: document.getElementById("forecastTablesWrap"),
   patternTablesWrap: document.getElementById("patternTablesWrap"),
   salesTablesWrap: document.getElementById("salesTablesWrap"),
+  adminApiKey: document.getElementById("adminApiKey"),
+  adminModelName: document.getElementById("adminModelName"),
+  adminModelAlias: document.getElementById("adminModelAlias"),
+  adminLoadConfigBtn: document.getElementById("adminLoadConfigBtn"),
+  adminSaveConfigBtn: document.getElementById("adminSaveConfigBtn"),
+  adminModelStatus: document.getElementById("adminModelStatus"),
+  adminMerchantId: document.getElementById("adminMerchantId"),
+  adminDryRun: document.getElementById("adminDryRun"),
+  adminRunEodBtn: document.getElementById("adminRunEodBtn"),
+  adminLoadLatestEodBtn: document.getElementById("adminLoadLatestEodBtn"),
+  adminEodStatus: document.getElementById("adminEodStatus"),
+  adminEodSummary: document.getElementById("adminEodSummary"),
   horizonDaysValue: document.getElementById("horizonDaysValue"),
   lookbackDaysValue: document.getElementById("lookbackDaysValue"),
   safetyBufferPctValue: document.getElementById("safetyBufferPctValue"),
@@ -154,16 +183,69 @@ async function fetchJSON(url, options = {}) {
   return payload;
 }
 
+function adminHeaders() {
+  const headers = {};
+  const key = (el.adminApiKey?.value || "").trim();
+  if (key) {
+    headers["x-admin-key"] = key;
+  }
+  return headers;
+}
+
+function authPayloadFromInputs() {
+  return {
+    email: (el.authEmail?.value || "").trim(),
+    password: (el.authPassword?.value || "").trim(),
+  };
+}
+
+async function loadAuthMe() {
+  state.auth.me = await fetchJSON("/api/auth/me");
+  const me = state.auth.me;
+  if (!me.authenticated) {
+    setStatus(el.authStatus, "Not logged in.");
+    return;
+  }
+  const merchantId = me.square_connection?.merchant_id || "not connected";
+  setStatus(el.authStatus, `Logged in as ${me.user.email}. Square: ${merchantId}.`, "success");
+}
+
+async function registerAuth() {
+  const payload = authPayloadFromInputs();
+  await fetchJSON("/api/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  await loadAuthMe();
+}
+
+async function loginAuth() {
+  const payload = authPayloadFromInputs();
+  await fetchJSON("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  await loadAuthMe();
+}
+
+async function logoutAuth() {
+  await fetchJSON("/api/auth/logout", { method: "POST" });
+  await loadAuthMe();
+}
+
 function syncSettingLabels() {
   el.horizonDaysValue.textContent = state.settings.horizonDays;
-  el.lookbackDaysValue.textContent = state.settings.lookbackDays;
+  el.lookbackDaysValue.textContent = "All history";
   el.safetyBufferPctValue.textContent = state.settings.safetyBufferPct;
   el.topNItemsValue.textContent = state.settings.topNItems;
 }
 
 function readSettingsFromInputs() {
   state.settings.horizonDays = toNumber(el.horizonDays.value, 7);
-  state.settings.lookbackDays = toNumber(el.lookbackDays.value, 30);
+  state.settings.lookbackDays = 30;
+  state.settings.forecastModel = el.forecastModel.value || "mlflow_pretrained";
   state.settings.safetyBufferPct = toNumber(el.safetyBufferPct.value, 10);
   state.settings.showForecastRange = Boolean(el.showForecastRange.checked);
   state.settings.splitForecastCharts = Boolean(el.splitForecastCharts.checked);
@@ -362,6 +444,7 @@ async function loadForecast() {
   const params = new URLSearchParams({
     horizon_days: String(state.settings.horizonDays),
     lookback_days: String(state.settings.lookbackDays),
+    model: state.settings.forecastModel,
     safety_buffer_pct: String(state.settings.safetyBufferPct),
   });
   state.forecast = await fetchJSON(`/api/dashboard/forecast?${params.toString()}`);
@@ -392,10 +475,143 @@ async function loadIngredients() {
   renderIngredientsTable();
 }
 
+function renderAdminEodSummary(report) {
+  if (!el.adminEodSummary) return;
+  if (!report) {
+    el.adminEodSummary.innerHTML = "";
+    return;
+  }
+  const sync = report.sync ? report.sync : report;
+  const alerts = sync.alerts || report.alerts || {};
+  const priorityAlerts = alerts.priority_alerts || alerts.coffee_alerts || [];
+  const nonPriority = alerts.non_priority_new_items || alerts.non_coffee_new_items || [];
+
+  el.adminEodSummary.innerHTML =
+    renderTable("EOD Sync Summary", [
+      {
+        run_id: sync.run_id ?? "--",
+        merchant_id: sync.merchant_id || "--",
+        fetched_orders: sync.fetched_orders ?? 0,
+        fetched_rows: sync.fetched_rows ?? 0,
+        appended_rows: sync.appended_rows ?? 0,
+        total_rows_after: sync.total_rows_after ?? 0,
+        dry_run: Boolean(sync.dry_run),
+      },
+    ], [
+      { key: "run_id", label: "Run ID" },
+      { key: "merchant_id", label: "Merchant" },
+      { key: "fetched_orders", label: "Orders" },
+      { key: "fetched_rows", label: "Rows Pulled" },
+      { key: "appended_rows", label: "Rows Appended" },
+      { key: "total_rows_after", label: "CSV Rows After" },
+      { key: "dry_run", label: "Dry Run" },
+    ]) +
+    renderTable("Priority Alerts (Ingredient Categories)", priorityAlerts, [
+      { key: "category", label: "Category" },
+      { key: "item", label: "Item" },
+      { key: "price_point_name", label: "Price Point" },
+      { key: "total_qty", label: "Qty" },
+      { key: "suggested_action", label: "Action" },
+    ]) +
+    renderTable("New Non-Priority Items", nonPriority, [
+      { key: "category", label: "Category" },
+      { key: "item", label: "Item" },
+      { key: "price_point_name", label: "Price Point" },
+      { key: "total_qty", label: "Qty" },
+      { key: "suggested_action", label: "Action" },
+    ]);
+}
+
+async function loadAdminModelConfig() {
+  const payload = await fetchJSON("/api/admin/model-config", {
+    headers: adminHeaders(),
+  });
+  state.admin.modelConfig = payload;
+  if (el.adminModelName) el.adminModelName.value = payload.model_name || "";
+  if (el.adminModelAlias) el.adminModelAlias.value = payload.model_alias || "";
+  setStatus(
+    el.adminModelStatus,
+    `Loaded model ${payload.model_name || "--"} @ ${payload.model_alias || "--"}`,
+    "success"
+  );
+}
+
+async function saveAdminModelConfig() {
+  const modelName = (el.adminModelName?.value || "").trim();
+  const modelAlias = (el.adminModelAlias?.value || "").trim();
+  if (!modelName || !modelAlias) {
+    throw new Error("Model name and alias are required.");
+  }
+  const payload = await fetchJSON("/api/admin/model-config", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...adminHeaders() },
+    body: JSON.stringify({
+      model_name: modelName,
+      model_alias: modelAlias,
+    }),
+  });
+  state.admin.modelConfig = payload.model_config || null;
+  setStatus(
+    el.adminModelStatus,
+    `Saved model config to ${payload.runtime_config_path}`,
+    "success"
+  );
+}
+
+async function loadLatestEodSync() {
+  const payload = await fetchJSON("/api/admin/eod/latest", {
+    headers: adminHeaders(),
+  });
+  state.admin.latestEod = payload.latest || null;
+  if (!payload.latest) {
+    setStatus(el.adminEodStatus, "No EOD sync run found yet.");
+    renderAdminEodSummary(null);
+    return;
+  }
+  setStatus(
+    el.adminEodStatus,
+    `Loaded latest sync #${payload.latest.run_id} (${payload.latest.run_ts_utc})`,
+    "success"
+  );
+  renderAdminEodSummary(payload.latest);
+}
+
+async function runEodSync() {
+  const merchantId = (el.adminMerchantId?.value || "").trim();
+  const dryRun = Boolean(el.adminDryRun?.checked);
+  const payload = await fetchJSON("/api/admin/eod-sync", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...adminHeaders() },
+    body: JSON.stringify({
+      merchant_id: merchantId || null,
+      dry_run: dryRun,
+      horizon_days: state.settings.horizonDays,
+      lookback_days: state.settings.lookbackDays,
+      safety_buffer_pct: state.settings.safetyBufferPct,
+    }),
+  });
+  state.admin.latestEod = payload.sync || null;
+  setStatus(
+    el.adminEodStatus,
+    `EOD sync complete. Appended ${payload.sync?.appended_rows ?? 0} rows.`,
+    "success"
+  );
+  renderAdminEodSummary(payload.sync);
+  await runFullRefresh();
+}
+
 function renderForecast() {
   const payload = state.forecast;
   if (!payload) return;
   const colors = palette();
+  const isDark = document.body.getAttribute("data-theme") === "dark";
+  const markerOutline = isDark ? "#0b1220" : "#ffffff";
+  const forecastMarker = {
+    size: 7,
+    symbol: "circle",
+    color: colors.forecast,
+    line: { width: 1.4, color: markerOutline },
+  };
 
   const summary = payload.summary || {};
   const past = payload.series?.past || [];
@@ -409,6 +625,29 @@ function renderForecast() {
   document.getElementById("heroOrder").textContent = `${summary.order_gallons ?? "--"} gal`;
   document.getElementById("heroModel").textContent = summary.model_used || "--";
   document.getElementById("forecastNote").textContent = summary.note || "";
+  const heroInterval = document.getElementById("heroInterval");
+  const hasExpectedBand =
+    Number.isFinite(toNumber(summary.expected_total_lower_gallons, NaN)) &&
+    Number.isFinite(toNumber(summary.expected_total_upper_gallons, NaN)) &&
+    Number.isFinite(toNumber(summary.expected_total_pm_gallons, NaN));
+  const hasOrderBand =
+    Number.isFinite(toNumber(summary.order_lower_gallons, NaN)) &&
+    Number.isFinite(toNumber(summary.order_upper_gallons, NaN)) &&
+    Number.isFinite(toNumber(summary.order_pm_gallons, NaN));
+  if (heroInterval) {
+    if (hasExpectedBand && hasOrderBand) {
+      heroInterval.textContent =
+        `Order range: ${Math.round(toNumber(summary.order_lower_gallons))}-${Math.round(
+          toNumber(summary.order_upper_gallons)
+        )} gal (+/-${Math.round(toNumber(summary.order_pm_gallons))}); ` +
+        `expected usage: ${formatNum(summary.expected_total_lower_gallons, 2)}-${formatNum(
+          summary.expected_total_upper_gallons,
+          2
+        )} gal (+/-${formatNum(summary.expected_total_pm_gallons, 2)}).`;
+    } else {
+      heroInterval.textContent = "Interval: --";
+    }
+  }
 
   const traces = [
     {
@@ -426,10 +665,22 @@ function renderForecast() {
       mode: "lines+markers",
       name: "Forecast",
       line: { width: 2.2, color: colors.forecast, dash: "dot" },
-      marker: { size: 5 },
+      marker: forecastMarker,
       hovertemplate: "<b>%{x}</b><br>Forecast: %{y:.2f} gal<extra></extra>",
     },
   ];
+
+  if (past.length > 0 && forecast.length > 0) {
+    traces.push({
+      x: [past[past.length - 1].date, forecast[0].date],
+      y: [toNumber(past[past.length - 1].gallons), toNumber(forecast[0].forecast_gallons)],
+      mode: "lines",
+      name: "Transition",
+      line: { width: 2, color: colors.forecast, dash: "dot" },
+      showlegend: false,
+      hoverinfo: "skip",
+    });
+  }
 
   const canDrawRange =
     state.settings.showForecastRange &&
@@ -499,7 +750,7 @@ function renderForecast() {
         mode: "lines+markers",
         name: "Forecast",
         line: { width: 2.8, color: colors.forecast, dash: "dot" },
-        marker: { size: 6 },
+        marker: forecastMarker,
         hovertemplate: "<b>%{x}</b><br>Forecast: %{y:.2f} gal<extra></extra>",
       },
     ];
@@ -998,6 +1249,10 @@ function bindEvents() {
     input.addEventListener("input", readSettingsFromInputs);
   });
 
+  el.forecastModel.addEventListener("change", () => {
+    readSettingsFromInputs();
+  });
+
   el.showForecastRange.addEventListener("change", () => {
     readSettingsFromInputs();
     if (state.forecast) renderForecast();
@@ -1033,6 +1288,108 @@ function bindEvents() {
       setStatus(el.sidebarStatus, error.message || "Refresh failed", "error");
     }
   });
+
+  if (el.authRegisterBtn) {
+    el.authRegisterBtn.addEventListener("click", async () => {
+      try {
+        await registerAuth();
+      } catch (error) {
+        setStatus(el.authStatus, error.message || "Register failed", "error");
+      }
+    });
+  }
+
+  if (el.authLoginBtn) {
+    el.authLoginBtn.addEventListener("click", async () => {
+      try {
+        await loginAuth();
+      } catch (error) {
+        setStatus(el.authStatus, error.message || "Login failed", "error");
+      }
+    });
+  }
+
+  if (el.authLogoutBtn) {
+    el.authLogoutBtn.addEventListener("click", async () => {
+      try {
+        await logoutAuth();
+      } catch (error) {
+        setStatus(el.authStatus, error.message || "Logout failed", "error");
+      }
+    });
+  }
+
+  if (el.squareConnectBtn) {
+    el.squareConnectBtn.addEventListener("click", () => {
+      window.location.href = "/api/auth/square/connect";
+    });
+  }
+
+  if (el.squareDisconnectBtn) {
+    el.squareDisconnectBtn.addEventListener("click", async () => {
+      try {
+        await fetchJSON("/api/auth/square/disconnect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ revoke_in_square: true }),
+        });
+        await loadAuthMe();
+      } catch (error) {
+        setStatus(el.authStatus, error.message || "Disconnect failed", "error");
+      }
+    });
+  }
+
+  if (el.adminLoadConfigBtn) {
+    el.adminLoadConfigBtn.addEventListener("click", async () => {
+      setStatus(el.adminModelStatus, "Loading model config...");
+      try {
+        await loadAdminModelConfig();
+      } catch (error) {
+        setStatus(el.adminModelStatus, error.message || "Failed to load model config", "error");
+      }
+    });
+  }
+
+  if (el.adminSaveConfigBtn) {
+    el.adminSaveConfigBtn.addEventListener("click", async () => {
+      setStatus(el.adminModelStatus, "Saving model config...");
+      el.adminSaveConfigBtn.disabled = true;
+      try {
+        await saveAdminModelConfig();
+        await runFullRefresh();
+      } catch (error) {
+        setStatus(el.adminModelStatus, error.message || "Failed to save model config", "error");
+      } finally {
+        el.adminSaveConfigBtn.disabled = false;
+      }
+    });
+  }
+
+  if (el.adminRunEodBtn) {
+    el.adminRunEodBtn.addEventListener("click", async () => {
+      setStatus(el.adminEodStatus, "Running EOD sync...");
+      el.adminRunEodBtn.disabled = true;
+      try {
+        await runEodSync();
+      } catch (error) {
+        setStatus(el.adminEodStatus, error.message || "EOD sync failed", "error");
+      } finally {
+        el.adminRunEodBtn.disabled = false;
+      }
+    });
+  }
+
+  if (el.adminLoadLatestEodBtn) {
+    el.adminLoadLatestEodBtn.addEventListener("click", async () => {
+      setStatus(el.adminEodStatus, "Loading latest EOD sync...");
+      try {
+        await loadLatestEodSync();
+      } catch (error) {
+        setStatus(el.adminEodStatus, error.message || "Failed to load latest sync", "error");
+      }
+    });
+  }
 
   el.salesWindowMode.addEventListener("change", () => {
     toggleCustomDateInputs();
@@ -1121,7 +1478,22 @@ async function init() {
   readSalesFiltersFromInputs();
   toggleCustomDateInputs();
   applyTheme(el.themeSelect.value);
+  try {
+    await loadAuthMe();
+  } catch (error) {
+    setStatus(el.authStatus, error.message || "Could not load auth state", "error");
+  }
   await runFullRefresh();
+  try {
+    await loadAdminModelConfig();
+  } catch (error) {
+    setStatus(el.adminModelStatus, error.message || "Admin config unavailable");
+  }
+  try {
+    await loadLatestEodSync();
+  } catch (error) {
+    setStatus(el.adminEodStatus, error.message || "No latest EOD sync");
+  }
 }
 
 init();

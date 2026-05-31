@@ -9,6 +9,8 @@ Notebook-first milk forecasting stack with:
 - [Process Flow](docs/PROCESS_FLOW.md)
 - [Developer Guide](docs/DEVELOPER_GUIDE.md)
 - [UI Guide](docs/UI_GUIDE.md)
+- [Auth](docs/AUTH.md)
+- [Ingredient Forecasting](docs/INGREDIENT_FORECASTING.md)
 - Legacy architecture reference: `docs/ARCHITECTURE.md`
 
 ## Setup
@@ -66,6 +68,19 @@ Streamlit:
 ```bash
 streamlit run app.py
 ```
+
+## V2 EOD flow (pretrained-only frontend)
+- Forecast dashboard now uses pretrained MLflow inference only (no per-request retraining from UI).
+- Admin model switching endpoint:
+  - `GET /api/admin/model-config`
+  - `PUT /api/admin/model-config` with `{ "model_name": "...", "model_alias": "..." }`
+- Daily sync endpoint:
+  - `POST /api/admin/eod-sync`
+  - Pulls new Square completed orders since latest CSV timestamp, appends to `JItters data.csv`, writes sync metadata to sqlite, and returns forecast/sales summaries.
+- Latest sync report:
+  - `GET /api/admin/eod/latest`
+- Scheduler helper:
+  - `python scripts/run_eod_update.py`
 
 ## Cleanup note
 Root legacy notebooks were archived to:

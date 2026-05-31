@@ -1,0 +1,5 @@
+ingredient_id,ingredient_name,unit,order_frequency_days,current_stock,safety_stock,model_name,source_column,active,apply_qty_multiplier
+milk,Milk,oz,7,,,prophet,Milk (oz),true,true
+coffee_beans,Coffee Beans,grams,14,,,moving_average,espresso/Coffee (grams),false,true
+tea,Tea,bags,14,,,seasonal_naive,Tea,false,true
+flavor_syrup,Flavor Syrup,oz,10,,,moving_average,flavor oz,false,true
