@@ -176,7 +176,19 @@ async function fetchJSON(url, options = {}) {
   const payload = contentType.includes("application/json") ? await response.json() : await response.text();
   if (!response.ok) {
     if (typeof payload === "object" && payload?.detail) {
-      throw new Error(payload.detail);
+      const detail = payload.detail;
+      if (Array.isArray(detail)) {
+        const messages = detail
+          .map((item) => {
+            if (typeof item === "string") return item;
+            const field = Array.isArray(item?.loc) ? item.loc[item.loc.length - 1] : null;
+            const msg = item?.msg || "Invalid value";
+            return field ? `${field}: ${msg}` : msg;
+          })
+          .join(", ");
+        throw new Error(messages || "Request failed validation.");
+      }
+      throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
     }
     throw new Error(typeof payload === "string" ? payload : `Request failed: ${response.status}`);
   }
