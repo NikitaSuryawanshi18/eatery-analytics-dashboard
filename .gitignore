@@ -1,3 +1,7 @@
+# Secrets
+.env
+.env.*
+
 # Python
 __pycache__/
 *.py[cod]
@@ -20,7 +24,7 @@ milk_tmp/
 
 # Local data files
 *.xlsx
-JItters data.csv
+!Ingredient Measure.xlsx
 *.parquet
 notebooks/cleaned_data.csv
 
