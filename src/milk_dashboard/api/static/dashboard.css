@@ -114,6 +114,12 @@ body {
   gap: 12px;
 }
 
+.auth-panel {
+  padding: 0 14px 14px;
+  display: grid;
+  gap: 12px;
+}
+
 label {
   display: grid;
   gap: 6px;
@@ -162,8 +168,40 @@ input.input-error {
 }
 
 .field-error {
-  min-height: 16px;
   font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.password-field {
+  position: relative;
+  display: block;
+}
+
+.password-field input {
+  padding-right: 44px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.password-toggle:hover,
+.password-toggle[aria-pressed="true"] {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border);
 }
 
 input[type="range"] {
@@ -195,6 +233,42 @@ input[type="range"] {
   margin-top: 18px;
   display: grid;
   gap: 10px;
+}
+
+.auth-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.account-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 10px;
+}
+
+.account-summary strong,
+.account-summary span:not(.user-avatar) {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-summary strong {
+  color: var(--text);
+  font-size: 0.94rem;
+}
+
+.account-summary span:not(.user-avatar) {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin-top: 2px;
 }
 
 .btn {
@@ -549,6 +623,10 @@ thead th {
   margin: 10px 0 0;
   color: var(--muted);
   min-height: 18px;
+}
+
+.settings-group > .status {
+  margin: 0 14px 14px;
 }
 
 .status.error {

@@ -35,8 +35,11 @@ const state = {
 const el = {
   appShell: document.querySelector(".app-shell"),
   sidebarToggleBtn: document.getElementById("sidebarToggleBtn"),
+  authLoginPanel: document.getElementById("authLoginPanel"),
+  authAccountPanel: document.getElementById("authAccountPanel"),
   authEmail: document.getElementById("authEmail"),
   authPassword: document.getElementById("authPassword"),
+  authPasswordToggle: document.getElementById("authPasswordToggle"),
   authEmailError: document.getElementById("authEmailError"),
   authPasswordError: document.getElementById("authPasswordError"),
   authRegisterBtn: document.getElementById("authRegisterBtn"),
@@ -56,11 +59,15 @@ const el = {
   registerLastName: document.getElementById("registerLastName"),
   registerEmail: document.getElementById("registerEmail"),
   registerPassword: document.getElementById("registerPassword"),
+  registerPasswordToggle: document.getElementById("registerPasswordToggle"),
   registerFirstNameError: document.getElementById("registerFirstNameError"),
   registerLastNameError: document.getElementById("registerLastNameError"),
   registerEmailError: document.getElementById("registerEmailError"),
   registerPasswordError: document.getElementById("registerPasswordError"),
   registerStatus: document.getElementById("registerStatus"),
+  authPanelInitials: document.getElementById("authPanelInitials"),
+  authPanelName: document.getElementById("authPanelName"),
+  authPanelEmail: document.getElementById("authPanelEmail"),
   horizonDays: document.getElementById("horizonDays"),
   lookbackDays: document.getElementById("lookbackDays"),
   forecastModel: document.getElementById("forecastModel"),
@@ -111,12 +118,22 @@ const el = {
   topNItemsValue: document.getElementById("topNItemsValue"),
 };
 
-function setStatus(target, message, tone = "") {
+function setStatus(target, message, tone = "", autoClearMs = 0) {
   if (!target) return;
+  const token = String(Date.now() + Math.random());
+  target.dataset.statusToken = token;
   target.textContent = message;
   target.classList.remove("error", "success");
   if (tone) {
     target.classList.add(tone);
+  }
+  if (autoClearMs > 0) {
+    window.setTimeout(() => {
+      if (target.dataset.statusToken === token) {
+        target.textContent = "";
+        target.classList.remove("error", "success");
+      }
+    }, autoClearMs);
   }
 }
 
@@ -323,17 +340,35 @@ function userInitials(user) {
 function updateAuthUi() {
   const me = state.auth.me;
   const signedIn = Boolean(me?.authenticated);
+  el.authLoginPanel?.classList.toggle("hidden", signedIn);
+  el.authAccountPanel?.classList.toggle("hidden", !signedIn);
   el.userBadge?.classList.toggle("hidden", !signedIn);
   if (signedIn) {
-    el.userInitials.textContent = userInitials(me.user);
-    el.userBadgeText.textContent = userDisplayName(me.user);
+    const initials = userInitials(me.user);
+    const displayName = userDisplayName(me.user);
+    el.userInitials.textContent = initials;
+    el.userBadgeText.textContent = displayName;
+    if (el.authPanelInitials) el.authPanelInitials.textContent = initials;
+    if (el.authPanelName) el.authPanelName.textContent = displayName;
+    if (el.authPanelEmail) el.authPanelEmail.textContent = me.user?.email || "--";
   } else {
     el.userInitials.textContent = "--";
     el.userBadgeText.textContent = "Signed out";
+    if (el.authPanelInitials) el.authPanelInitials.textContent = "--";
+    if (el.authPanelName) el.authPanelName.textContent = "Signed in";
+    if (el.authPanelEmail) el.authPanelEmail.textContent = "--";
   }
   if (el.authLogoutBtn) el.authLogoutBtn.disabled = !signedIn;
   if (el.squareConnectBtn) el.squareConnectBtn.disabled = !signedIn;
   if (el.squareDisconnectBtn) el.squareDisconnectBtn.disabled = !signedIn || !me?.square_connection;
+}
+
+function togglePasswordVisibility(input, button) {
+  if (!input || !button) return;
+  const showPassword = input.type === "password";
+  input.type = showPassword ? "text" : "password";
+  button.setAttribute("aria-pressed", showPassword ? "true" : "false");
+  button.setAttribute("aria-label", showPassword ? "Hide password" : "Show password");
 }
 
 function openRegisterModal() {
@@ -341,6 +376,11 @@ function openRegisterModal() {
   [el.registerFirstName, el.registerLastName, el.registerEmail, el.registerPassword].forEach((input) => {
     if (input) input.value = "";
   });
+  if (el.registerPassword) el.registerPassword.type = "password";
+  if (el.registerPasswordToggle) {
+    el.registerPasswordToggle.setAttribute("aria-pressed", "false");
+    el.registerPasswordToggle.setAttribute("aria-label", "Show password");
+  }
   [
     [el.registerFirstName, el.registerFirstNameError],
     [el.registerLastName, el.registerLastNameError],
@@ -359,12 +399,12 @@ async function loadAuthMe() {
   state.auth.me = await fetchJSON("/api/auth/me");
   const me = state.auth.me;
   if (!me.authenticated) {
-    setStatus(el.authStatus, "Not logged in.");
+    setStatus(el.authStatus, "");
     updateAuthUi();
     return;
   }
   const merchantId = me.square_connection?.merchant_id || "not connected";
-  setStatus(el.authStatus, `Logged in as ${userDisplayName(me.user)}. Square: ${merchantId}.`, "success");
+  setStatus(el.authStatus, `Logged in as ${userDisplayName(me.user)}. Square: ${merchantId}.`, "success", 5000);
   updateAuthUi();
 }
 
@@ -383,7 +423,7 @@ async function registerAuth() {
     });
     await loadAuthMe();
     closeRegisterModal();
-    setStatus(el.authStatus, `Account created. Logged in as ${payload.first_name} ${payload.last_name}.`, "success");
+    setStatus(el.authStatus, `Account created. Logged in as ${payload.first_name} ${payload.last_name}.`, "success", 5000);
   } finally {
     el.registerSubmitBtn.disabled = false;
   }
@@ -401,12 +441,13 @@ async function loginAuth() {
     body: JSON.stringify(payload),
   });
   await loadAuthMe();
+  setStatus(el.authStatus, "Logged in.", "success", 5000);
 }
 
 async function logoutAuth() {
   await fetchJSON("/api/auth/logout", { method: "POST" });
   await loadAuthMe();
-  setStatus(el.authStatus, "Logged out.");
+  setStatus(el.authStatus, "Logged out.", "success", 3500);
 }
 
 function syncSettingLabels() {
@@ -1462,6 +1503,18 @@ function bindEvents() {
       setStatus(el.sidebarStatus, error.message || "Refresh failed", "error");
     }
   });
+
+  if (el.authPasswordToggle) {
+    el.authPasswordToggle.addEventListener("click", () => {
+      togglePasswordVisibility(el.authPassword, el.authPasswordToggle);
+    });
+  }
+
+  if (el.registerPasswordToggle) {
+    el.registerPasswordToggle.addEventListener("click", () => {
+      togglePasswordVisibility(el.registerPassword, el.registerPasswordToggle);
+    });
+  }
 
   if (el.authRegisterBtn) {
     el.authRegisterBtn.addEventListener("click", () => {

@@ -24,7 +24,7 @@
 
       <details class="settings-group" open>
         <summary>Auth</summary>
-        <div class="settings-grid">
+        <div id="authLoginPanel" class="auth-panel">
           <label>
             <span class="label-text">Email <span class="required">*</span></span>
             <input id="authEmail" type="email" placeholder="owner@example.com" required autocomplete="email" />
@@ -32,18 +32,31 @@
           </label>
           <label>
             <span class="label-text">Password <span class="required">*</span></span>
-            <input id="authPassword" type="password" placeholder="Minimum 8 characters" required autocomplete="current-password" />
+            <span class="password-field">
+              <input id="authPassword" type="password" placeholder="Minimum 8 characters" required autocomplete="current-password" />
+              <button id="authPasswordToggle" class="password-toggle" type="button" aria-label="Show password" aria-pressed="false">&#128065;</button>
+            </span>
             <span id="authPasswordError" class="field-error"></span>
           </label>
+          <div class="auth-actions">
+            <button id="authLoginBtn" class="btn btn-primary">Login</button>
+            <button id="authRegisterBtn" class="btn btn-secondary">Register</button>
+          </div>
         </div>
-        <div class="sidebar-actions">
-          <button id="authLoginBtn" class="btn btn-primary">Login</button>
-          <button id="authLogoutBtn" class="btn btn-secondary">Logout</button>
-          <button id="authRegisterBtn" class="btn btn-secondary">Register</button>
-        </div>
-        <div class="sidebar-actions">
-          <button id="squareConnectBtn" class="btn btn-primary">Connect Square</button>
-          <button id="squareDisconnectBtn" class="btn btn-secondary">Disconnect Square</button>
+
+        <div id="authAccountPanel" class="auth-panel hidden">
+          <div class="account-summary">
+            <span id="authPanelInitials" class="user-avatar">--</span>
+            <div>
+              <strong id="authPanelName">Signed in</strong>
+              <span id="authPanelEmail">--</span>
+            </div>
+          </div>
+          <div class="auth-actions">
+            <button id="authLogoutBtn" class="btn btn-secondary">Logout</button>
+            <button id="squareConnectBtn" class="btn btn-primary">Connect Square</button>
+            <button id="squareDisconnectBtn" class="btn btn-secondary">Disconnect Square</button>
+          </div>
         </div>
         <p id="authStatus" class="status"></p>
       </details>
@@ -417,7 +430,10 @@
         </label>
         <label>
           <span class="label-text">Password <span class="required">*</span></span>
-          <input id="registerPassword" type="password" required autocomplete="new-password" />
+          <span class="password-field">
+            <input id="registerPassword" type="password" required autocomplete="new-password" />
+            <button id="registerPasswordToggle" class="password-toggle" type="button" aria-label="Show password" aria-pressed="false">&#128065;</button>
+          </span>
           <span id="registerPasswordError" class="field-error"></span>
         </label>
       </div>
