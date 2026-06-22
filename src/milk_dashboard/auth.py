@@ -23,6 +23,8 @@ PBKDF2_ITERATIONS = 600_000
 class UserRecord:
     id: int
     email: str
+    first_name: str
+    last_name: str
     created_at_utc: str
     last_login_at_utc: str | None
 
@@ -116,6 +118,8 @@ class AuthStore:
                 CREATE TABLE IF NOT EXISTS users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     email TEXT NOT NULL UNIQUE,
+                    first_name TEXT NOT NULL DEFAULT '',
+                    last_name TEXT NOT NULL DEFAULT '',
                     password_hash TEXT NOT NULL,
                     created_at_utc TEXT NOT NULL,
                     last_login_at_utc TEXT
@@ -157,10 +161,17 @@ class AuthStore:
                 );
                 """
             )
+            columns = {row["name"] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
+            if "first_name" not in columns:
+                conn.execute("ALTER TABLE users ADD COLUMN first_name TEXT NOT NULL DEFAULT ''")
+            if "last_name" not in columns:
+                conn.execute("ALTER TABLE users ADD COLUMN last_name TEXT NOT NULL DEFAULT ''")
             conn.commit()
 
-    def create_user(self, *, email: str, password: str) -> UserRecord:
+    def create_user(self, *, email: str, password: str, first_name: str = "", last_name: str = "") -> UserRecord:
         normalized = email.strip().lower()
+        clean_first_name = first_name.strip()
+        clean_last_name = last_name.strip()
         if not normalized or "@" not in normalized:
             raise ValueError("A valid email is required.")
         if len(password) < 8:
@@ -170,8 +181,11 @@ class AuthStore:
         with self._connect() as conn:
             try:
                 cur = conn.execute(
-                    "INSERT INTO users (email, password_hash, created_at_utc) VALUES (?, ?, ?)",
-                    (normalized, password_hash, created),
+                    """
+                    INSERT INTO users (email, first_name, last_name, password_hash, created_at_utc)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (normalized, clean_first_name, clean_last_name, password_hash, created),
                 )
             except sqlite3.IntegrityError as exc:
                 raise ValueError("An account with this email already exists.") from exc
@@ -179,6 +193,8 @@ class AuthStore:
             return UserRecord(
                 id=int(cur.lastrowid),
                 email=normalized,
+                first_name=clean_first_name,
+                last_name=clean_last_name,
                 created_at_utc=created,
                 last_login_at_utc=None,
             )
@@ -187,7 +203,11 @@ class AuthStore:
         normalized = email.strip().lower()
         with self._connect() as conn:
             row = conn.execute(
-                "SELECT id, email, password_hash, created_at_utc, last_login_at_utc FROM users WHERE email = ?",
+                """
+                SELECT id, email, first_name, last_name, password_hash, created_at_utc, last_login_at_utc
+                FROM users
+                WHERE email = ?
+                """,
                 (normalized,),
             ).fetchone()
             if row is None or not verify_password(password, str(row["password_hash"])):
@@ -198,6 +218,8 @@ class AuthStore:
             return UserRecord(
                 id=int(row["id"]),
                 email=str(row["email"]),
+                first_name=str(row["first_name"] or ""),
+                last_name=str(row["last_name"] or ""),
                 created_at_utc=str(row["created_at_utc"]),
                 last_login_at_utc=now,
             )
@@ -235,7 +257,7 @@ class AuthStore:
         with self._connect() as conn:
             row = conn.execute(
                 """
-                SELECT u.id, u.email, u.created_at_utc, u.last_login_at_utc
+                SELECT u.id, u.email, u.first_name, u.last_name, u.created_at_utc, u.last_login_at_utc
                 FROM user_sessions s
                 JOIN users u ON u.id = s.user_id
                 WHERE s.token_hash = ?
@@ -249,6 +271,8 @@ class AuthStore:
             return UserRecord(
                 id=int(row["id"]),
                 email=str(row["email"]),
+                first_name=str(row["first_name"] or ""),
+                last_name=str(row["last_name"] or ""),
                 created_at_utc=str(row["created_at_utc"]),
                 last_login_at_utc=str(row["last_login_at_utc"]) if row["last_login_at_utc"] else None,
             )

@@ -26,18 +26,20 @@
         <summary>Auth</summary>
         <div class="settings-grid">
           <label>
-            Email
-            <input id="authEmail" type="email" placeholder="owner@example.com" />
+            <span class="label-text">Email <span class="required">*</span></span>
+            <input id="authEmail" type="email" placeholder="owner@example.com" required autocomplete="email" />
+            <span id="authEmailError" class="field-error"></span>
           </label>
           <label>
-            Password
-            <input id="authPassword" type="password" placeholder="Minimum 8 characters" />
+            <span class="label-text">Password <span class="required">*</span></span>
+            <input id="authPassword" type="password" placeholder="Minimum 8 characters" required autocomplete="current-password" />
+            <span id="authPasswordError" class="field-error"></span>
           </label>
         </div>
         <div class="sidebar-actions">
-          <button id="authRegisterBtn" class="btn btn-secondary">Register</button>
           <button id="authLoginBtn" class="btn btn-primary">Login</button>
           <button id="authLogoutBtn" class="btn btn-secondary">Logout</button>
+          <button id="authRegisterBtn" class="btn btn-secondary">Register</button>
         </div>
         <div class="sidebar-actions">
           <button id="squareConnectBtn" class="btn btn-primary">Connect Square</button>
@@ -128,12 +130,18 @@
           <h2>Operations Dashboard</h2>
           <p>FastAPI-driven analytics and configuration workspace</p>
         </div>
-        <nav class="tab-nav">
-          <button class="tab-btn active" data-tab="forecastTab">Milk Forecasts</button>
-          <button class="tab-btn" data-tab="salesTab">Sales Breakdown</button>
-          <button class="tab-btn" data-tab="ingredientsTab">Ingredient Config</button>
-          <button class="tab-btn" data-tab="adminTab">Admin Console</button>
-        </nav>
+        <div class="topbar-actions">
+          <div id="userBadge" class="user-badge hidden" aria-live="polite">
+            <span id="userInitials" class="user-avatar">--</span>
+            <span id="userBadgeText" class="user-badge-text">Signed out</span>
+          </div>
+          <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="forecastTab">Milk Forecasts</button>
+            <button class="tab-btn" data-tab="salesTab">Sales Breakdown</button>
+            <button class="tab-btn" data-tab="ingredientsTab">Ingredient Config</button>
+            <button class="tab-btn" data-tab="adminTab">Admin Console</button>
+          </nav>
+        </div>
       </header>
 
       <section id="forecastTab" class="tab-panel active">
@@ -383,6 +391,42 @@
         </article>
       </section>
     </main>
+  </div>
+
+  <div id="registerModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="registerModalTitle">
+    <div class="modal-panel">
+      <div class="modal-head">
+        <h3 id="registerModalTitle">Create Account</h3>
+        <button id="registerModalCloseBtn" class="icon-btn" type="button" aria-label="Close register modal">&times;</button>
+      </div>
+      <div class="modal-grid">
+        <label>
+          <span class="label-text">First Name <span class="required">*</span></span>
+          <input id="registerFirstName" type="text" required autocomplete="given-name" />
+          <span id="registerFirstNameError" class="field-error"></span>
+        </label>
+        <label>
+          <span class="label-text">Last Name <span class="required">*</span></span>
+          <input id="registerLastName" type="text" required autocomplete="family-name" />
+          <span id="registerLastNameError" class="field-error"></span>
+        </label>
+        <label>
+          <span class="label-text">Email <span class="required">*</span></span>
+          <input id="registerEmail" type="email" required autocomplete="email" />
+          <span id="registerEmailError" class="field-error"></span>
+        </label>
+        <label>
+          <span class="label-text">Password <span class="required">*</span></span>
+          <input id="registerPassword" type="password" required autocomplete="new-password" />
+          <span id="registerPasswordError" class="field-error"></span>
+        </label>
+      </div>
+      <p id="registerStatus" class="status"></p>
+      <div class="modal-actions">
+        <button id="registerCancelBtn" class="btn btn-secondary" type="button">Cancel</button>
+        <button id="registerSubmitBtn" class="btn btn-primary" type="button">Register</button>
+      </div>
+    </div>
   </div>
 </body>
 </html>

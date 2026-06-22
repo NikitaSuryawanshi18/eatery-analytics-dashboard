@@ -19,16 +19,25 @@ def test_register_login_and_me(monkeypatch, tmp_path: Path):
 
     register = client.post(
         "/api/auth/register",
-        json={"email": "owner@example.com", "password": "strong-pass-123"},
+        json={
+            "first_name": "Cafe",
+            "last_name": "Owner",
+            "email": "owner@example.com",
+            "password": "strong-pass-123",
+        },
     )
     assert register.status_code == 200
     assert register.json()["user"]["email"] == "owner@example.com"
+    assert register.json()["user"]["first_name"] == "Cafe"
+    assert register.json()["user"]["last_name"] == "Owner"
 
     me = client.get("/api/auth/me")
     assert me.status_code == 200
     payload = me.json()
     assert payload["authenticated"] is True
     assert payload["user"]["email"] == "owner@example.com"
+    assert payload["user"]["first_name"] == "Cafe"
+    assert payload["user"]["last_name"] == "Owner"
     assert payload["square_connection"] is None
 
     logout = client.post("/api/auth/logout")

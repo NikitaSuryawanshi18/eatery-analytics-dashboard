@@ -122,7 +122,18 @@ print(Fernet.generate_key().decode())
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
 
-Request body for register/login:
+Request body for register:
+
+```json
+{
+  "first_name": "Cafe",
+  "last_name": "Owner",
+  "email": "owner@example.com",
+  "password": "strong-password"
+}
+```
+
+Request body for login:
 
 ```json
 {

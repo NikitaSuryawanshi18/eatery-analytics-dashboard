@@ -135,6 +135,11 @@ class AuthCredentialsRequest(BaseModel):
     password: str = Field(min_length=8)
 
 
+class AuthRegisterRequest(AuthCredentialsRequest):
+    first_name: str = Field(min_length=1)
+    last_name: str = Field(min_length=1)
+
+
 class SquareDisconnectRequest(BaseModel):
     revoke_in_square: bool = Field(default=True)
 
@@ -1459,19 +1464,31 @@ def dashboard_index():
     return FileResponse(index_path)
 
 
+def _user_payload(user: UserRecord) -> dict[str, Any]:
+    return {
+        "id": user.id,
+        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "created_at_utc": user.created_at_utc,
+        "last_login_at_utc": user.last_login_at_utc,
+    }
+
+
 @app.post("/api/auth/register")
-def auth_register(payload: AuthCredentialsRequest, response: Response) -> dict[str, Any]:
+def auth_register(payload: AuthRegisterRequest, response: Response) -> dict[str, Any]:
     try:
-        user = _auth_store().create_user(email=payload.email, password=payload.password)
+        user = _auth_store().create_user(
+            email=payload.email,
+            password=payload.password,
+            first_name=payload.first_name,
+            last_name=payload.last_name,
+        )
         session_token = _auth_store().create_session(user_id=user.id)
         _set_session_cookie(response, session_token)
         return {
             "status": "registered",
-            "user": {
-                "id": user.id,
-                "email": user.email,
-                "created_at_utc": user.created_at_utc,
-            },
+            "user": _user_payload(user),
         }
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -1486,12 +1503,7 @@ def auth_login(payload: AuthCredentialsRequest, response: Response) -> dict[str,
     _set_session_cookie(response, session_token)
     return {
         "status": "authenticated",
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            "created_at_utc": user.created_at_utc,
-            "last_login_at_utc": user.last_login_at_utc,
-        },
+        "user": _user_payload(user),
     }
 
 
@@ -1514,12 +1526,7 @@ def auth_me(session_token: str | None = Cookie(default=None, alias=SESSION_COOKI
     connection = _auth_store().get_square_connection_by_user(user.id, include_secrets=False)
     return {
         "authenticated": True,
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            "created_at_utc": user.created_at_utc,
-            "last_login_at_utc": user.last_login_at_utc,
-        },
+        "user": _user_payload(user),
         "square_connection": connection,
     }
 

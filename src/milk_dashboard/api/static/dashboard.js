@@ -37,12 +37,30 @@ const el = {
   sidebarToggleBtn: document.getElementById("sidebarToggleBtn"),
   authEmail: document.getElementById("authEmail"),
   authPassword: document.getElementById("authPassword"),
+  authEmailError: document.getElementById("authEmailError"),
+  authPasswordError: document.getElementById("authPasswordError"),
   authRegisterBtn: document.getElementById("authRegisterBtn"),
   authLoginBtn: document.getElementById("authLoginBtn"),
   authLogoutBtn: document.getElementById("authLogoutBtn"),
   squareConnectBtn: document.getElementById("squareConnectBtn"),
   squareDisconnectBtn: document.getElementById("squareDisconnectBtn"),
   authStatus: document.getElementById("authStatus"),
+  userBadge: document.getElementById("userBadge"),
+  userInitials: document.getElementById("userInitials"),
+  userBadgeText: document.getElementById("userBadgeText"),
+  registerModal: document.getElementById("registerModal"),
+  registerModalCloseBtn: document.getElementById("registerModalCloseBtn"),
+  registerCancelBtn: document.getElementById("registerCancelBtn"),
+  registerSubmitBtn: document.getElementById("registerSubmitBtn"),
+  registerFirstName: document.getElementById("registerFirstName"),
+  registerLastName: document.getElementById("registerLastName"),
+  registerEmail: document.getElementById("registerEmail"),
+  registerPassword: document.getElementById("registerPassword"),
+  registerFirstNameError: document.getElementById("registerFirstNameError"),
+  registerLastNameError: document.getElementById("registerLastNameError"),
+  registerEmailError: document.getElementById("registerEmailError"),
+  registerPasswordError: document.getElementById("registerPasswordError"),
+  registerStatus: document.getElementById("registerStatus"),
   horizonDays: document.getElementById("horizonDays"),
   lookbackDays: document.getElementById("lookbackDays"),
   forecastModel: document.getElementById("forecastModel"),
@@ -100,6 +118,58 @@ function setStatus(target, message, tone = "") {
   if (tone) {
     target.classList.add(tone);
   }
+}
+
+function setFieldError(input, errorNode, message = "") {
+  if (errorNode) {
+    errorNode.textContent = message;
+  }
+  if (input) {
+    input.classList.toggle("input-error", Boolean(message));
+    input.setAttribute("aria-invalid", message ? "true" : "false");
+  }
+}
+
+function requireField(input, errorNode, label) {
+  const value = (input?.value || "").trim();
+  if (!value) {
+    setFieldError(input, errorNode, `${label} is required.`);
+    return false;
+  }
+  setFieldError(input, errorNode);
+  return true;
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function requireEmail(input, errorNode) {
+  const value = (input?.value || "").trim();
+  if (!value) {
+    setFieldError(input, errorNode, "Email is required.");
+    return false;
+  }
+  if (!isValidEmail(value)) {
+    setFieldError(input, errorNode, "Enter a valid email address.");
+    return false;
+  }
+  setFieldError(input, errorNode);
+  return true;
+}
+
+function requirePassword(input, errorNode) {
+  const value = (input?.value || "").trim();
+  if (!value) {
+    setFieldError(input, errorNode, "Password is required.");
+    return false;
+  }
+  if (value.length < 8) {
+    setFieldError(input, errorNode, "Password must be at least 8 characters.");
+    return false;
+  }
+  setFieldError(input, errorNode);
+  return true;
 }
 
 function toNumber(value, fallback = 0) {
@@ -204,11 +274,85 @@ function adminHeaders() {
   return headers;
 }
 
-function authPayloadFromInputs() {
+function loginPayloadFromInputs() {
   return {
     email: (el.authEmail?.value || "").trim(),
     password: (el.authPassword?.value || "").trim(),
   };
+}
+
+function registerPayloadFromInputs() {
+  return {
+    first_name: (el.registerFirstName?.value || "").trim(),
+    last_name: (el.registerLastName?.value || "").trim(),
+    email: (el.registerEmail?.value || "").trim(),
+    password: (el.registerPassword?.value || "").trim(),
+  };
+}
+
+function validateLoginInputs() {
+  return [
+    requireEmail(el.authEmail, el.authEmailError),
+    requirePassword(el.authPassword, el.authPasswordError),
+  ].every(Boolean);
+}
+
+function validateRegisterInputs() {
+  return [
+    requireField(el.registerFirstName, el.registerFirstNameError, "First name"),
+    requireField(el.registerLastName, el.registerLastNameError, "Last name"),
+    requireEmail(el.registerEmail, el.registerEmailError),
+    requirePassword(el.registerPassword, el.registerPasswordError),
+  ].every(Boolean);
+}
+
+function userDisplayName(user) {
+  const name = [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim();
+  return name || user?.email || "Signed in";
+}
+
+function userInitials(user) {
+  const first = (user?.first_name || "").trim();
+  const last = (user?.last_name || "").trim();
+  if (first || last) {
+    return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
+  }
+  return (user?.email || "?").charAt(0).toUpperCase();
+}
+
+function updateAuthUi() {
+  const me = state.auth.me;
+  const signedIn = Boolean(me?.authenticated);
+  el.userBadge?.classList.toggle("hidden", !signedIn);
+  if (signedIn) {
+    el.userInitials.textContent = userInitials(me.user);
+    el.userBadgeText.textContent = userDisplayName(me.user);
+  } else {
+    el.userInitials.textContent = "--";
+    el.userBadgeText.textContent = "Signed out";
+  }
+  if (el.authLogoutBtn) el.authLogoutBtn.disabled = !signedIn;
+  if (el.squareConnectBtn) el.squareConnectBtn.disabled = !signedIn;
+  if (el.squareDisconnectBtn) el.squareDisconnectBtn.disabled = !signedIn || !me?.square_connection;
+}
+
+function openRegisterModal() {
+  setStatus(el.registerStatus, "");
+  [el.registerFirstName, el.registerLastName, el.registerEmail, el.registerPassword].forEach((input) => {
+    if (input) input.value = "";
+  });
+  [
+    [el.registerFirstName, el.registerFirstNameError],
+    [el.registerLastName, el.registerLastNameError],
+    [el.registerEmail, el.registerEmailError],
+    [el.registerPassword, el.registerPasswordError],
+  ].forEach(([input, errorNode]) => setFieldError(input, errorNode));
+  el.registerModal?.classList.remove("hidden");
+  el.registerFirstName?.focus();
+}
+
+function closeRegisterModal() {
+  el.registerModal?.classList.add("hidden");
 }
 
 async function loadAuthMe() {
@@ -216,24 +360,41 @@ async function loadAuthMe() {
   const me = state.auth.me;
   if (!me.authenticated) {
     setStatus(el.authStatus, "Not logged in.");
+    updateAuthUi();
     return;
   }
   const merchantId = me.square_connection?.merchant_id || "not connected";
-  setStatus(el.authStatus, `Logged in as ${me.user.email}. Square: ${merchantId}.`, "success");
+  setStatus(el.authStatus, `Logged in as ${userDisplayName(me.user)}. Square: ${merchantId}.`, "success");
+  updateAuthUi();
 }
 
 async function registerAuth() {
-  const payload = authPayloadFromInputs();
-  await fetchJSON("/api/auth/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  await loadAuthMe();
+  if (!validateRegisterInputs()) {
+    setStatus(el.registerStatus, "Please complete the required fields.", "error");
+    return;
+  }
+  const payload = registerPayloadFromInputs();
+  el.registerSubmitBtn.disabled = true;
+  try {
+    await fetchJSON("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    await loadAuthMe();
+    closeRegisterModal();
+    setStatus(el.authStatus, `Account created. Logged in as ${payload.first_name} ${payload.last_name}.`, "success");
+  } finally {
+    el.registerSubmitBtn.disabled = false;
+  }
 }
 
 async function loginAuth() {
-  const payload = authPayloadFromInputs();
+  if (!validateLoginInputs()) {
+    setStatus(el.authStatus, "Please enter your email and password.", "error");
+    return;
+  }
+  const payload = loginPayloadFromInputs();
   await fetchJSON("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -245,6 +406,7 @@ async function loginAuth() {
 async function logoutAuth() {
   await fetchJSON("/api/auth/logout", { method: "POST" });
   await loadAuthMe();
+  setStatus(el.authStatus, "Logged out.");
 }
 
 function syncSettingLabels() {
@@ -1302,14 +1464,62 @@ function bindEvents() {
   });
 
   if (el.authRegisterBtn) {
-    el.authRegisterBtn.addEventListener("click", async () => {
+    el.authRegisterBtn.addEventListener("click", () => {
+      openRegisterModal();
+    });
+  }
+
+  if (el.registerSubmitBtn) {
+    el.registerSubmitBtn.addEventListener("click", async () => {
       try {
         await registerAuth();
       } catch (error) {
-        setStatus(el.authStatus, error.message || "Register failed", "error");
+        setStatus(el.registerStatus, error.message || "Register failed", "error");
       }
     });
   }
+
+  [el.registerModalCloseBtn, el.registerCancelBtn].forEach((btn) => {
+    if (btn) {
+      btn.addEventListener("click", closeRegisterModal);
+    }
+  });
+
+  if (el.registerModal) {
+    el.registerModal.addEventListener("click", (event) => {
+      if (event.target === el.registerModal) {
+        closeRegisterModal();
+      }
+    });
+  }
+
+  document.addEventListener("keydown", (event) => {
+    const registerOpen = el.registerModal && !el.registerModal.classList.contains("hidden");
+    if (!registerOpen) return;
+    if (event.key === "Escape") {
+      closeRegisterModal();
+    }
+    if (event.key === "Enter") {
+      const target = event.target;
+      if (target instanceof HTMLInputElement && el.registerModal.contains(target)) {
+        event.preventDefault();
+        el.registerSubmitBtn?.click();
+      }
+    }
+  });
+
+  [
+    [el.authEmail, el.authEmailError],
+    [el.authPassword, el.authPasswordError],
+    [el.registerFirstName, el.registerFirstNameError],
+    [el.registerLastName, el.registerLastNameError],
+    [el.registerEmail, el.registerEmailError],
+    [el.registerPassword, el.registerPasswordError],
+  ].forEach(([input, errorNode]) => {
+    if (input) {
+      input.addEventListener("input", () => setFieldError(input, errorNode));
+    }
+  });
 
   if (el.authLoginBtn) {
     el.authLoginBtn.addEventListener("click", async () => {
