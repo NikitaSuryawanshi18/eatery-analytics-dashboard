@@ -115,6 +115,10 @@ print(Fernet.generate_key().decode())
   - Set to `true` in HTTPS production deployments.
 - `MILK_INVITATION_TTL_DAYS`
   - Optional; invitation lifetime in days (default `7`, maximum `30`).
+- `MILK_TEAM_ADMIN_EMAIL`
+  - Optional shared first-account email. When the auth database is empty, this account is created automatically.
+- `MILK_TEAM_ADMIN_PASSWORD`
+  - Password for `MILK_TEAM_ADMIN_EMAIL`. Keep this value private and do not change it after the account has been created.
 
 ### Existing sync/runtime variables still used
 
@@ -205,6 +209,7 @@ You must update the redirect URI in both:
 6. Set `SQUARE_REDIRECT_URI`.
 7. Set `SQUARE_ENV=production`.
 8. Set `MILK_SESSION_COOKIE_SECURE=true` when running behind HTTPS.
+9. For a first account without a persistent disk, set `MILK_TEAM_ADMIN_EMAIL` and `MILK_TEAM_ADMIN_PASSWORD`.
 9. Ensure the app can write to:
    - `artifacts/runtime/`
    - `artifacts/data/`

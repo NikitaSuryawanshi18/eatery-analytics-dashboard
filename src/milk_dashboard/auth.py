@@ -211,6 +211,30 @@ class AuthStore:
                 last_login_at_utc=None,
             )
 
+    def get_user_by_email(self, email: str) -> UserRecord | None:
+        normalized = email.strip().lower()
+        if not normalized:
+            return None
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT id, email, first_name, last_name, created_at_utc, last_login_at_utc
+                FROM users
+                WHERE email = ?
+                """,
+                (normalized,),
+            ).fetchone()
+        if row is None:
+            return None
+        return UserRecord(
+            id=int(row["id"]),
+            email=str(row["email"]),
+            first_name=str(row["first_name"] or ""),
+            last_name=str(row["last_name"] or ""),
+            created_at_utc=str(row["created_at_utc"]),
+            last_login_at_utc=str(row["last_login_at_utc"]) if row["last_login_at_utc"] else None,
+        )
+
     def create_registration_invitation(
         self,
         *,

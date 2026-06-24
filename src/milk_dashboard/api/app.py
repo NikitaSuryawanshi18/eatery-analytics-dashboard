@@ -266,6 +266,25 @@ def _invitation_ttl_days() -> int:
     return value
 
 
+def _ensure_team_admin_account() -> None:
+    """Create the shared first account when its Render credentials are configured."""
+    email = os.getenv("MILK_TEAM_ADMIN_EMAIL", "").strip()
+    password = os.getenv("MILK_TEAM_ADMIN_PASSWORD", "")
+    if not email and not password:
+        return
+    if not email or not password:
+        LOGGER.error("Both MILK_TEAM_ADMIN_EMAIL and MILK_TEAM_ADMIN_PASSWORD are required for the team admin account.")
+        return
+    store = _auth_store()
+    if store.get_user_by_email(email) is not None:
+        return
+    try:
+        store.create_user(email=email, password=password, first_name="Team", last_name="Admin")
+        LOGGER.info("Created configured team admin account for %s.", email)
+    except ValueError:
+        LOGGER.exception("Could not create configured team admin account.")
+
+
 def _ops_settings() -> dict[str, str]:
     return {
         "token_backup_path": os.getenv("SQUARE_TOKEN_BACKUP_FILE", "square_oauth_token_backup.txt"),
@@ -1457,6 +1476,7 @@ def _refresh_connection_tokens(connection: dict[str, Any]) -> dict[str, Any]:
 
 @app.on_event("startup")
 def warm_startup_model() -> None:
+    _ensure_team_admin_account()
     if os.getenv("MILK_SKIP_STARTUP_TRAINING", "").strip().lower() in {"1", "true", "yes", "on"}:
         LOGGER.info("Startup model training skipped by MILK_SKIP_STARTUP_TRAINING.")
         return
@@ -1565,6 +1585,7 @@ def create_registration_invitation(
 
 @app.post("/api/auth/login")
 def auth_login(payload: AuthCredentialsRequest, response: Response) -> dict[str, Any]:
+    _ensure_team_admin_account()
     user = _auth_store().authenticate_user(email=payload.email, password=payload.password)
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid email or password.")

@@ -121,3 +121,17 @@ def test_dashboard_data_requires_an_authenticated_session(monkeypatch, tmp_path:
     assert response.status_code == 401
     assert client.get("/").status_code == 200
     assert "Welcome back" in client.get("/").text
+
+
+def test_configured_team_admin_account_is_created_on_startup(monkeypatch, tmp_path: Path):
+    _configure_auth_env(monkeypatch, tmp_path)
+    monkeypatch.setenv("MILK_TEAM_ADMIN_EMAIL", "team@example.com")
+    monkeypatch.setenv("MILK_TEAM_ADMIN_PASSWORD", "shared-admin-pass")
+    client = TestClient(api_app.app)
+
+    response = client.post(
+        "/api/auth/login",
+        json={"email": "team@example.com", "password": "shared-admin-pass"},
+    )
+
+    assert response.status_code == 200
