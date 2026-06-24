@@ -7,9 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/dashboard.css?v=20260624b" />
+  <link rel="stylesheet" href="/static/dashboard.css?v=20260624c" />
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-  <script src="/static/dashboard.js?v=20260624b" defer></script>
+  <script src="/static/dashboard.js?v=20260624c" defer></script>
 </head>
 <body data-theme="dark">
   <div class="app-shell">
@@ -346,13 +346,13 @@
           <div class="inline-controls invite-controls">
             <label>
               Email
-              <input id="inviteEmail" type="email" placeholder="staff@example.com" autocomplete="email" />
+              <input id="inviteEmail" type="email" autocomplete="off" />
             </label>
             <button id="createInviteBtn" class="btn btn-primary">Create Invite Link</button>
           </div>
-          <label class="invite-link-field">
+          <label id="inviteLinkField" class="invite-link-field hidden">
             Invite Link
-            <input id="inviteLink" type="text" readonly placeholder="Create an invite to generate a link" />
+            <input id="inviteLink" type="text" readonly />
           </label>
           <p id="inviteStatus" class="status"></p>
         </article>

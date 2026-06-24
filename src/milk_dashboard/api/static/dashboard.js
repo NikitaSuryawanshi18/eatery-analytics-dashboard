@@ -114,6 +114,7 @@ const el = {
   adminEodSummary: document.getElementById("adminEodSummary"),
   inviteEmail: document.getElementById("inviteEmail"),
   createInviteBtn: document.getElementById("createInviteBtn"),
+  inviteLinkField: document.getElementById("inviteLinkField"),
   inviteLink: document.getElementById("inviteLink"),
   inviteStatus: document.getElementById("inviteStatus"),
   horizonDaysValue: document.getElementById("horizonDaysValue"),
@@ -791,6 +792,8 @@ async function createInvite() {
     el.inviteLink.value = payload.registration_url || `${window.location.origin}${payload.registration_path}`;
     el.inviteLink.select();
   }
+  el.inviteLinkField?.classList.remove("hidden");
+  if (el.inviteEmail) el.inviteEmail.value = "";
   setStatus(el.inviteStatus, `Invite created for ${payload.email}. It expires in ${payload.expires_in_days} days.`, "success");
 }
 
