@@ -10,12 +10,28 @@ def _configure_auth_env(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setenv("APP_AUTH_SECRET", "test-auth-secret")
     monkeypatch.setenv("TOKEN_ENCRYPTION_KEY", Fernet.generate_key().decode("utf-8"))
     monkeypatch.setenv("MILK_AUTH_DB_PATH", str(tmp_path / "auth.db"))
+    monkeypatch.setenv("MILK_SKIP_STARTUP_TRAINING", "true")
     api_app._auth_store.cache_clear()
 
 
 def test_register_login_and_me(monkeypatch, tmp_path: Path):
     _configure_auth_env(monkeypatch, tmp_path)
     client = TestClient(api_app.app)
+    inviter = api_app._auth_store().create_user(
+        email="admin@example.com",
+        password="strong-pass-123",
+    )
+    admin_login = client.post(
+        "/api/auth/login",
+        json={"email": inviter.email, "password": "strong-pass-123"},
+    )
+    assert admin_login.status_code == 200
+    invitation = client.post(
+        "/api/admin/invitations",
+        json={"email": "owner@example.com"},
+    )
+    assert invitation.status_code == 200
+    invitation_token = invitation.json()["registration_path"].split("token=", maxsplit=1)[1]
 
     register = client.post(
         "/api/auth/register",
@@ -24,6 +40,7 @@ def test_register_login_and_me(monkeypatch, tmp_path: Path):
             "last_name": "Owner",
             "email": "owner@example.com",
             "password": "strong-pass-123",
+            "invitation_token": invitation_token,
         },
     )
     assert register.status_code == 200
@@ -54,6 +71,18 @@ def test_register_login_and_me(monkeypatch, tmp_path: Path):
     assert login.status_code == 200
     assert login.json()["status"] == "authenticated"
 
+    reused_invitation = client.post(
+        "/api/auth/register",
+        json={
+            "first_name": "Cafe",
+            "last_name": "Owner",
+            "email": "owner@example.com",
+            "password": "strong-pass-123",
+            "invitation_token": invitation_token,
+        },
+    )
+    assert reused_invitation.status_code == 400
+
 
 def test_square_connection_is_encrypted_at_rest(monkeypatch, tmp_path: Path):
     _configure_auth_env(monkeypatch, tmp_path)
@@ -81,3 +110,14 @@ def test_square_connection_is_encrypted_at_rest(monkeypatch, tmp_path: Path):
     assert connection_private is not None
     assert connection_private["access_token"] == "access-secret"
     assert connection_private["refresh_token"] == "refresh-secret"
+
+
+def test_dashboard_data_requires_an_authenticated_session(monkeypatch, tmp_path: Path):
+    _configure_auth_env(monkeypatch, tmp_path)
+    client = TestClient(api_app.app)
+
+    response = client.get("/api/dashboard/forecast")
+
+    assert response.status_code == 401
+    assert client.get("/").status_code == 200
+    assert "Welcome back" in client.get("/").text

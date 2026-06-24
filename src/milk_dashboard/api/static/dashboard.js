@@ -112,6 +112,10 @@ const el = {
   adminLoadLatestEodBtn: document.getElementById("adminLoadLatestEodBtn"),
   adminEodStatus: document.getElementById("adminEodStatus"),
   adminEodSummary: document.getElementById("adminEodSummary"),
+  inviteEmail: document.getElementById("inviteEmail"),
+  createInviteBtn: document.getElementById("createInviteBtn"),
+  inviteLink: document.getElementById("inviteLink"),
+  inviteStatus: document.getElementById("inviteStatus"),
   horizonDaysValue: document.getElementById("horizonDaysValue"),
   lookbackDaysValue: document.getElementById("lookbackDaysValue"),
   safetyBufferPctValue: document.getElementById("safetyBufferPctValue"),
@@ -399,13 +403,13 @@ async function loadAuthMe() {
   state.auth.me = await fetchJSON("/api/auth/me");
   const me = state.auth.me;
   if (!me.authenticated) {
-    setStatus(el.authStatus, "");
-    updateAuthUi();
-    return;
+    window.location.replace("/");
+    return false;
   }
   const merchantId = me.square_connection?.merchant_id || "not connected";
   setStatus(el.authStatus, `Logged in as ${userDisplayName(me.user)}. Square: ${merchantId}.`, "success", 5000);
   updateAuthUi();
+  return true;
 }
 
 async function registerAuth() {
@@ -446,8 +450,7 @@ async function loginAuth() {
 
 async function logoutAuth() {
   await fetchJSON("/api/auth/logout", { method: "POST" });
-  await loadAuthMe();
-  setStatus(el.authStatus, "Logged out.", "success", 3500);
+  window.location.assign("/");
 }
 
 function syncSettingLabels() {
@@ -771,6 +774,24 @@ async function saveAdminModelConfig() {
     `Saved model config to ${payload.runtime_config_path}`,
     "success"
   );
+}
+
+async function createInvite() {
+  const email = (el.inviteEmail?.value || "").trim();
+  if (!isValidEmail(email)) {
+    setStatus(el.inviteStatus, "Enter a valid email address.", "error");
+    return;
+  }
+  const payload = await fetchJSON("/api/admin/invitations", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (el.inviteLink) {
+    el.inviteLink.value = payload.registration_url || `${window.location.origin}${payload.registration_path}`;
+    el.inviteLink.select();
+  }
+  setStatus(el.inviteStatus, `Invite created for ${payload.email}. It expires in ${payload.expires_in_days} days.`, "success");
 }
 
 async function loadLatestEodSync() {
@@ -1626,6 +1647,19 @@ function bindEvents() {
     });
   }
 
+  if (el.createInviteBtn) {
+    el.createInviteBtn.addEventListener("click", async () => {
+      el.createInviteBtn.disabled = true;
+      try {
+        await createInvite();
+      } catch (error) {
+        setStatus(el.inviteStatus, error.message || "Could not create invitation", "error");
+      } finally {
+        el.createInviteBtn.disabled = false;
+      }
+    });
+  }
+
   if (el.adminSaveConfigBtn) {
     el.adminSaveConfigBtn.addEventListener("click", async () => {
       setStatus(el.adminModelStatus, "Saving model config...");
@@ -1754,7 +1788,8 @@ async function init() {
   toggleCustomDateInputs();
   applyTheme(el.themeSelect.value);
   try {
-    await loadAuthMe();
+    const authenticated = await loadAuthMe();
+    if (!authenticated) return;
   } catch (error) {
     setStatus(el.authStatus, error.message || "Could not load auth state", "error");
   }

@@ -13,7 +13,7 @@ from pathlib import Path
 from urllib.parse import urlencode
 from typing import Any, Literal
 
-from fastapi import Cookie, Depends, FastAPI, Header, HTTPException, Query, Response
+from fastapi import Cookie, Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 import mlflow
@@ -138,6 +138,11 @@ class AuthCredentialsRequest(BaseModel):
 class AuthRegisterRequest(AuthCredentialsRequest):
     first_name: str = Field(min_length=1)
     last_name: str = Field(min_length=1)
+    invitation_token: str = Field(min_length=1)
+
+
+class RegistrationInvitationRequest(BaseModel):
+    email: str = Field(min_length=3)
 
 
 class SquareDisconnectRequest(BaseModel):
@@ -248,6 +253,17 @@ def _require_admin_key(x_admin_key: str | None) -> None:
     expected = _admin_api_key()
     if expected and x_admin_key != expected:
         raise HTTPException(status_code=401, detail="Invalid admin key")
+
+
+def _invitation_ttl_days() -> int:
+    raw = os.getenv("MILK_INVITATION_TTL_DAYS", "7").strip()
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise RuntimeError("MILK_INVITATION_TTL_DAYS must be a whole number.") from exc
+    if not 1 <= value <= 30:
+        raise RuntimeError("MILK_INVITATION_TTL_DAYS must be between 1 and 30.")
+    return value
 
 
 def _ops_settings() -> dict[str, str]:
@@ -1441,6 +1457,9 @@ def _refresh_connection_tokens(connection: dict[str, Any]) -> dict[str, Any]:
 
 @app.on_event("startup")
 def warm_startup_model() -> None:
+    if os.getenv("MILK_SKIP_STARTUP_TRAINING", "").strip().lower() in {"1", "true", "yes", "on"}:
+        LOGGER.info("Startup model training skipped by MILK_SKIP_STARTUP_TRAINING.")
+        return
     _startup_retrained_model.cache_clear()
     try:
         trained = _startup_retrained_model()
@@ -1457,10 +1476,30 @@ def warm_startup_model() -> None:
 
 
 @app.get("/", include_in_schema=False)
-def dashboard_index():
+def dashboard_index(
+    session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+):
+    """Serve the public auth screen or the authenticated dashboard shell."""
+    index_path = STATIC_DIR / ("index.html" if _auth_store().get_user_by_session(session_token) else "auth.html")
+    if not index_path.exists():
+        raise HTTPException(status_code=404, detail="Dashboard UI not found")
+    return FileResponse(index_path)
+
+
+@app.get("/dashboard", include_in_schema=False)
+def authenticated_dashboard_index(user: UserRecord = Depends(_current_user)):
+    del user
     index_path = STATIC_DIR / "index.html"
     if not index_path.exists():
         raise HTTPException(status_code=404, detail="Dashboard UI not found")
+    return FileResponse(index_path)
+
+
+@app.get("/register", include_in_schema=False)
+def registration_index():
+    index_path = STATIC_DIR / "auth.html"
+    if not index_path.exists():
+        raise HTTPException(status_code=404, detail="Authentication UI not found")
     return FileResponse(index_path)
 
 
@@ -1478,6 +1517,10 @@ def _user_payload(user: UserRecord) -> dict[str, Any]:
 @app.post("/api/auth/register")
 def auth_register(payload: AuthRegisterRequest, response: Response) -> dict[str, Any]:
     try:
+        _auth_store().consume_registration_invitation(
+            token=payload.invitation_token,
+            email=payload.email,
+        )
         user = _auth_store().create_user(
             email=payload.email,
             password=payload.password,
@@ -1492,6 +1535,32 @@ def auth_register(payload: AuthRegisterRequest, response: Response) -> dict[str,
         }
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/admin/invitations")
+def create_registration_invitation(
+    payload: RegistrationInvitationRequest,
+    request: Request,
+    user: UserRecord = Depends(_current_user),
+) -> dict[str, Any]:
+    try:
+        token = _auth_store().create_registration_invitation(
+            email=payload.email,
+            invited_by_user_id=user.id,
+            ttl_days=_invitation_ttl_days(),
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    registration_path = f"/register?token={token}"
+    return {
+        "status": "created",
+        "email": payload.email.strip().lower(),
+        "expires_in_days": _invitation_ttl_days(),
+        "registration_path": registration_path,
+        "registration_url": str(request.base_url).rstrip("/") + registration_path,
+    }
 
 
 @app.post("/api/auth/login")
@@ -1642,7 +1711,11 @@ def ready() -> dict[str, str]:
 
 
 @app.post("/v1/forecast", response_model=InferenceForecastResponse)
-def forecast(payload: InferenceForecastRequest) -> InferenceForecastResponse:
+def forecast(
+    payload: InferenceForecastRequest,
+    user: UserRecord = Depends(_current_user),
+) -> InferenceForecastResponse:
+    del user
     try:
         return _forecast_response_from_startup_model(payload)
     except HTTPException:
@@ -1670,7 +1743,9 @@ def dashboard_forecast(
         "mlflow_production",
         "mlflow_active",
     ] = Query(default="mlflow_pretrained"),
+    user: UserRecord = Depends(_current_user),
 ) -> dict[str, Any]:
+    del user
     try:
         return _build_forecast_payload(
             lookback_days=lookback_days,
@@ -1689,7 +1764,9 @@ def dashboard_sales_breakdown(
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
     drill_category: str | None = Query(default=None),
+    user: UserRecord = Depends(_current_user),
 ) -> dict[str, Any]:
+    del user
     try:
         return _sales_breakdown_payload(
             top_n=top_n,
@@ -1703,7 +1780,8 @@ def dashboard_sales_breakdown(
 
 
 @app.get("/api/dashboard/ingredients")
-def dashboard_ingredients() -> dict[str, Any]:
+def dashboard_ingredients(user: UserRecord = Depends(_current_user)) -> dict[str, Any]:
+    del user
     try:
         data = _load_dashboard_data()
         rows = data.ingredient_edit.sort_values(["category", "item", "price_point_name"]).reset_index(drop=True)
@@ -1718,7 +1796,11 @@ def dashboard_ingredients() -> dict[str, Any]:
 
 
 @app.put("/api/dashboard/ingredients")
-def dashboard_ingredients_update(payload: IngredientUpdateRequest) -> dict[str, Any]:
+def dashboard_ingredients_update(
+    payload: IngredientUpdateRequest,
+    user: UserRecord = Depends(_current_user),
+) -> dict[str, Any]:
+    del user
     try:
         written_rows = _save_ingredient_rows(payload.rows)
         return {
@@ -1790,7 +1872,11 @@ def square_eod_sync(
 
 
 @app.get("/api/admin/model-config")
-def admin_model_config(x_admin_key: str | None = Header(default=None)) -> dict[str, Any]:
+def admin_model_config(
+    x_admin_key: str | None = Header(default=None),
+    user: UserRecord = Depends(_current_user),
+) -> dict[str, Any]:
+    del user
     _require_admin_key(x_admin_key)
     return _model_config_payload()
 
@@ -1799,7 +1885,9 @@ def admin_model_config(x_admin_key: str | None = Header(default=None)) -> dict[s
 def admin_model_config_update(
     payload: AdminModelConfigUpdateRequest,
     x_admin_key: str | None = Header(default=None),
+    user: UserRecord = Depends(_current_user),
 ) -> dict[str, Any]:
+    del user
     _require_admin_key(x_admin_key)
     try:
         path = _save_runtime_model_config(model_name=payload.model_name, model_alias=payload.model_alias)
@@ -1814,7 +1902,11 @@ def admin_model_config_update(
 
 
 @app.get("/api/admin/eod/latest")
-def admin_latest_eod_sync(x_admin_key: str | None = Header(default=None)) -> dict[str, Any]:
+def admin_latest_eod_sync(
+    x_admin_key: str | None = Header(default=None),
+    user: UserRecord = Depends(_current_user),
+) -> dict[str, Any]:
+    del user
     _require_admin_key(x_admin_key)
     try:
         cfg = _build_eod_sync_config()
@@ -1831,7 +1923,9 @@ def admin_latest_eod_sync(x_admin_key: str | None = Header(default=None)) -> dic
 def admin_eod_sync(
     payload: EODSyncRequest,
     x_admin_key: str | None = Header(default=None),
+    user: UserRecord = Depends(_current_user),
 ) -> dict[str, Any]:
+    del user
     _require_admin_key(x_admin_key)
     try:
         start_at = _parse_optional_utc(payload.start_at_utc)
@@ -1871,7 +1965,8 @@ def admin_eod_sync(
 
 
 @app.post("/api/dashboard/refresh")
-def dashboard_refresh() -> dict[str, str]:
+def dashboard_refresh(user: UserRecord = Depends(_current_user)) -> dict[str, str]:
+    del user
     _load_dashboard_data.cache_clear()
     _startup_retrained_model.cache_clear()
     _startup_retrained_model()

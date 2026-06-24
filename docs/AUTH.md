@@ -5,6 +5,7 @@ This document is the source of truth for authentication, Square OAuth onboarding
 ## What This Adds
 
 - App-level user authentication with email/password.
+- A public sign-in/register screen; dashboard data and controls require a valid session.
 - Session-based login using an HTTP-only cookie.
 - Self-serve Square OAuth onboarding per app user.
 - Encrypted storage for Square access and refresh tokens.
@@ -13,16 +14,26 @@ This document is the source of truth for authentication, Square OAuth onboarding
 
 ## User Flow
 
+### Dashboard access
+
+1. Visiting `/` without a valid session serves the sign-in/register screen.
+2. After login or registration, the browser is sent to `/dashboard`.
+3. Dashboard, admin, forecast, ingredient, refresh, and Square endpoints require the session cookie and return `401` without it.
+4. Logging out returns the browser to the public sign-in screen.
+
+The dashboard UI is therefore not the security boundary by itself; the API checks the session before returning data.
+
 ### New client onboarding
 
-1. User registers in the app with email and password.
-2. User logs in.
-3. User clicks `Connect Square`.
-4. Browser is redirected to Square.
-5. User signs into their Square account and approves access.
-6. Square redirects back to this app callback URL.
-7. Backend exchanges the code for tokens and stores the merchant connection.
-8. Future sync runs use the stored refresh token automatically.
+1. An existing administrator creates a one-time invite link for the user's email in the Admin Console.
+2. User opens that link and registers in the app with email and password.
+3. User logs in.
+4. User clicks `Connect Square`.
+5. Browser is redirected to Square.
+6. User signs into their Square account and approves access.
+7. Square redirects back to this app callback URL.
+8. Backend exchanges the code for tokens and stores the merchant connection.
+9. Future sync runs use the stored refresh token automatically.
 
 No manual token generation or manual link-sending is required for normal onboarding.
 
@@ -59,6 +70,7 @@ Tables:
 - `users`
 - `user_sessions`
 - `oauth_states`
+- `registration_invitations`
 - `square_connections`
 
 ### Existing sync database
@@ -101,6 +113,8 @@ print(Fernet.generate_key().decode())
   - Default: `artifacts/runtime/auth.db`
 - `MILK_SESSION_COOKIE_SECURE`
   - Set to `true` in HTTPS production deployments.
+- `MILK_INVITATION_TTL_DAYS`
+  - Optional; invitation lifetime in days (default `7`, maximum `30`).
 
 ### Existing sync/runtime variables still used
 
@@ -132,6 +146,14 @@ Request body for register:
   "password": "strong-password"
 }
 ```
+
+Registration also requires the one-time `invitation_token` supplied by an invite link.
+
+### Registration invitations
+
+- `POST /api/admin/invitations`
+
+Requires a valid session. Any logged-in team member can create a one-time `/register?token=...` link for a new teammate. The link can be copied from the Admin Console and sent through your usual email or messaging tool.
 
 Request body for login:
 
@@ -228,3 +250,4 @@ uvicorn milk_dashboard.api.app:app --host 0.0.0.0 --port 8000
 - Square tokens are encrypted at rest.
 - Access tokens are not returned from API responses.
 - Production should always use HTTPS with secure cookies enabled.
+- Registration is invite-only: each token is tied to one email address, expires, and is consumed when the account is created.

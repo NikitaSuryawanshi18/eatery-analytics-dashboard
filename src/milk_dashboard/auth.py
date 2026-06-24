@@ -16,6 +16,7 @@ from typing import Any
 
 SESSION_TTL_DAYS = 30
 STATE_TTL_MINUTES = 10
+INVITATION_TTL_DAYS = 7
 PBKDF2_ITERATIONS = 600_000
 
 
@@ -159,6 +160,17 @@ class AuthStore:
                     revoked_at_utc TEXT,
                     FOREIGN KEY(user_id) REFERENCES users(id)
                 );
+
+                CREATE TABLE IF NOT EXISTS registration_invitations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    email TEXT NOT NULL,
+                    token_hash TEXT NOT NULL UNIQUE,
+                    invited_by_user_id INTEGER NOT NULL,
+                    created_at_utc TEXT NOT NULL,
+                    expires_at_utc TEXT NOT NULL,
+                    used_at_utc TEXT,
+                    FOREIGN KEY(invited_by_user_id) REFERENCES users(id)
+                );
                 """
             )
             columns = {row["name"] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
@@ -198,6 +210,72 @@ class AuthStore:
                 created_at_utc=created,
                 last_login_at_utc=None,
             )
+
+    def create_registration_invitation(
+        self,
+        *,
+        email: str,
+        invited_by_user_id: int,
+        ttl_days: int = INVITATION_TTL_DAYS,
+    ) -> str:
+        normalized = email.strip().lower()
+        if not normalized or "@" not in normalized:
+            raise ValueError("A valid email is required.")
+        if ttl_days < 1:
+            raise ValueError("Invitation expiry must be at least one day.")
+        token = secrets.token_urlsafe(32)
+        token_hash = _hash_session_token(token)
+        created = datetime.now(timezone.utc)
+        expires = created + timedelta(days=ttl_days)
+        with self._connect() as conn:
+            existing_user = conn.execute("SELECT id FROM users WHERE email = ?", (normalized,)).fetchone()
+            if existing_user is not None:
+                raise ValueError("An account with this email already exists.")
+            conn.execute(
+                """
+                UPDATE registration_invitations
+                SET used_at_utc = ?
+                WHERE email = ? AND used_at_utc IS NULL
+                """,
+                (created.isoformat(), normalized),
+            )
+            conn.execute(
+                """
+                INSERT INTO registration_invitations (
+                    email, token_hash, invited_by_user_id, created_at_utc, expires_at_utc
+                ) VALUES (?, ?, ?, ?, ?)
+                """,
+                (normalized, token_hash, invited_by_user_id, created.isoformat(), expires.isoformat()),
+            )
+            conn.commit()
+        return token
+
+    def consume_registration_invitation(self, *, token: str, email: str) -> None:
+        normalized = email.strip().lower()
+        if not token.strip():
+            raise ValueError("A valid invitation is required to create an account.")
+        now = datetime.now(timezone.utc)
+        token_hash = _hash_session_token(token)
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT email, expires_at_utc, used_at_utc
+                FROM registration_invitations
+                WHERE token_hash = ?
+                """,
+                (token_hash,),
+            ).fetchone()
+            if row is None or str(row["email"]).lower() != normalized:
+                raise ValueError("This invitation is invalid for that email address.")
+            if row["used_at_utc"]:
+                raise ValueError("This invitation has already been used.")
+            if _parse_iso(str(row["expires_at_utc"])) <= now:
+                raise ValueError("This invitation has expired.")
+            conn.execute(
+                "UPDATE registration_invitations SET used_at_utc = ? WHERE token_hash = ?",
+                (now.isoformat(), token_hash),
+            )
+            conn.commit()
 
     def authenticate_user(self, *, email: str, password: str) -> UserRecord | None:
         normalized = email.strip().lower()

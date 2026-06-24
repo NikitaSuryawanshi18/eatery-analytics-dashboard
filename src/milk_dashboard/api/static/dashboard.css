@@ -619,6 +619,14 @@ thead th {
   align-self: end;
 }
 
+.invite-controls {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.invite-link-field {
+  margin-top: 12px;
+}
+
 .status {
   margin: 10px 0 0;
   color: var(--muted);
